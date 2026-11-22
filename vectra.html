@@ -1,0 +1,3923 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>VECTRA — Умный автопилот тренировок и сушки</title>
+
+  <!-- iOS & Mobile PWA мета-теги для нативного запуска без адресной строки Safari -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="VECTRA">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#09090C">
+  <meta name="format-detection" content="telephone=no">
+
+  <!-- Стартовая SVG-иконка (автоматически апгрейдится до 180x180 PNG через Canvas при загрузке для iOS) -->
+  <link id="apple-touch-icon-link" rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%2309090C'/%3E%3Crect x='6' y='6' width='168' height='168' rx='35' fill='none' stroke='%23C8FF00' stroke-opacity='0.35' stroke-width='3'/%3E%3Cpath d='M42 48 L90 138 L138 48 L115 48 L90 98 L65 48 Z' fill='%23C8FF00'/%3E%3Ccircle cx='90' cy='46' r='8' fill='%2300E5FF'/%3E%3C/svg%3E">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2309090C'/%3E%3Cpath d='M14 16 L32 50 L50 16 L41 16 L32 34 L23 16 Z' fill='%23C8FF00'/%3E%3Ccircle cx='32' cy='15' r='3.5' fill='%2300E5FF'/%3E%3C/svg%3E">
+
+  <!-- Встроенный manifest.json как Data-URI (работает с одного index.html на GitHub Pages) -->
+  <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22VECTRA%20%E2%80%94%20%D0%90%D0%B2%D1%82%D0%BE%D0%BF%D0%B8%D0%BB%D0%BE%D1%82%20%D1%82%D1%80%D0%B5%D0%BD%D0%B8%D1%80%D0%BE%D0%B2%D0%BE%D0%BA%22%2C%22short_name%22%3A%22VECTRA%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%2309090C%22%2C%22theme_color%22%3A%22%2309090C%22%2C%22orientation%22%3A%22portrait%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%2520viewBox%3D%270%25200%2520192%2520192%27%253E%253Crect%2520width%3D%27192%27%2520height%3D%27192%27%2520rx%3D%2742%27%2520fill%3D%27%252309090C%27%2F%253E%253Cpath%2520d%3D%27M46%252052%2520L96%2520146%2520L146%252052%2520L122%252052%2520L96%2520104%2520L70%252052%2520Z%27%2520fill%3D%27%2523C8FF00%27%2F%253E%253Ccircle%2520cx%3D%2796%27%2520cy%3D%2750%27%2520r%3D%278%27%2520fill%3D%27%252300E5FF%27%2F%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
+
+  <style>
+    /* ==========================================================================
+       1. ДИЗАЙН-СИСТЕМА VECTRA v2 (Apple Fitness+ / Whoop Dark Aesthetic)
+       ========================================================================== */
+    :root {
+      --bg: #09090C;
+      --surface: #14141A;
+      --surface-2: #1B1B24;
+      --surface-3: #242430;
+      --border: #22222C;
+      --border-strong: #323240;
+
+      --text: #F6F6FA;
+      --text-2: #9C9CAE;
+      --text-3: #646478;
+
+      --lime: #C8FF00;
+      --lime-dim: rgba(200, 255, 0, 0.13);
+      --lime-border: rgba(200, 255, 0, 0.36);
+
+      --cyan: #00E5FF;
+      --cyan-dim: rgba(0, 229, 255, 0.13);
+      --cyan-border: rgba(0, 229, 255, 0.34);
+
+      --amber: #FFB800;
+      --amber-dim: rgba(255, 184, 0, 0.14);
+      --amber-border: rgba(255, 184, 0, 0.38);
+
+      --coral: #FF4D6D;
+      --coral-dim: rgba(255, 77, 109, 0.15);
+      --coral-border: rgba(255, 77, 109, 0.4);
+
+      --radius-xl: 22px;
+      --radius-lg: 16px;
+      --radius-md: 12px;
+      --radius-sm: 10px;
+
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --nav-height: 70px;
+      --font-sans: -apple-system, "SF Pro Display", "SF Pro Text", BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      min-height: 100%;
+    }
+
+    .app-shell {
+      max-width: 500px;
+      margin: 0 auto;
+      min-height: 100vh;
+      position: relative;
+      padding-top: calc(12px + var(--safe-top));
+      padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 104px);
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+
+    /* Верхняя панель */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      padding: 4px 2px;
+      gap: 10px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 11px;
+      background: linear-gradient(145deg, #1B1B24, #0E0E14);
+      border: 1px solid var(--lime-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px rgba(200, 255, 0, 0.14);
+    }
+
+    .brand-title {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      line-height: 1.1;
+    }
+
+    .brand-sub {
+      font-size: 11px;
+      color: var(--text-2);
+    }
+
+    .status-pill {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 13px;
+      border-radius: 999px;
+      background: var(--surface);
+      border: 1px solid var(--border-strong);
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--lime);
+      box-shadow: 0 0 8px var(--lime);
+      flex-shrink: 0;
+    }
+
+    /* Карточки */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 16px;
+      margin-bottom: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-hero {
+      background: radial-gradient(circle at top right, rgba(200, 255, 0, 0.1), transparent 55%),
+                  radial-gradient(circle at bottom left, rgba(0, 229, 255, 0.08), transparent 55%),
+                  var(--surface);
+      border-color: var(--border-strong);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: -0.015em;
+    }
+
+    .card-subtitle {
+      font-size: 12px;
+      color: var(--text-2);
+      margin-top: 2px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--text-3);
+      margin: 18px 4px 9px;
+    }
+
+    /* Вкладки */
+    .tab-view {
+      display: none;
+      animation: tabFade 0.2s ease-out;
+    }
+
+    .tab-view.active {
+      display: block;
+    }
+
+    @keyframes tabFade {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Кнопки (Touch targets >= 44px) */
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: inherit;
+      transition: transform 0.12s ease, background-color 0.16s ease, border-color 0.16s ease, opacity 0.16s ease;
+    }
+
+    button:active {
+      transform: scale(0.96);
+    }
+
+    .btn-primary {
+      width: 100%;
+      min-height: 48px;
+      padding: 13px 18px;
+      border-radius: var(--radius-lg);
+      background: var(--lime);
+      color: #09090C;
+      font-size: 15px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 8px 24px rgba(200, 255, 0, 0.2);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.4;
+      box-shadow: none;
+    }
+
+    .btn-secondary {
+      min-height: 44px;
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      background: var(--surface-2);
+      border: 1px solid var(--border-strong);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-danger {
+      min-height: 44px;
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      background: var(--coral-dim);
+      border: 1px solid var(--coral-border);
+      color: #FF8AA0;
+      font-size: 13px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+    }
+
+    .badge-lime { background: var(--lime-dim); color: var(--lime); border: 1px solid var(--lime-border); }
+    .badge-cyan { background: var(--cyan-dim); color: var(--cyan); border: 1px solid var(--cyan-border); }
+    .badge-amber { background: var(--amber-dim); color: var(--amber); border: 1px solid var(--amber-border); }
+    .badge-coral { background: var(--coral-dim); color: #FF8AA0; border: 1px solid var(--coral-border); }
+    .badge-muted { background: var(--surface-2); color: var(--text-2); border: 1px solid var(--border-strong); }
+
+    /* ==========================================================================
+       2. ВКЛАДКА «ТРЕНИРОВКА» — АВТОПИЛОТ И RIR
+       ========================================================================== */
+    .autopilot-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .ap-pill {
+      background: rgba(9, 9, 12, 0.55);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 9px 10px;
+    }
+
+    .ap-pill-lbl {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-3);
+    }
+
+    .ap-pill-val {
+      font-size: 13.5px;
+      font-weight: 800;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .comp-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 9px 11px;
+      border-radius: var(--radius-md);
+      background: var(--cyan-dim);
+      border: 1px solid var(--cyan-border);
+      font-size: 12px;
+      color: #D8FAFF;
+      margin-bottom: 12px;
+    }
+
+    .comp-banner.active-cut {
+      background: var(--amber-dim);
+      border-color: var(--amber-border);
+      color: #FFE7A8;
+    }
+
+    .readiness-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .readiness-btn {
+      min-height: 48px;
+      padding: 6px 2px;
+      border-radius: var(--radius-md);
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+    }
+
+    .readiness-btn .r-num {
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .readiness-btn .r-lbl {
+      font-size: 9.5px;
+      color: var(--text-2);
+    }
+
+    .readiness-btn.active {
+      background: var(--lime-dim);
+      border-color: var(--lime);
+    }
+
+    .readiness-btn.active .r-num,
+    .readiness-btn.active .r-lbl {
+      color: var(--lime);
+    }
+
+    .readiness-note {
+      margin-top: 9px;
+      padding: 8px 11px;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.03);
+      border-left: 3px solid var(--cyan);
+      font-size: 12px;
+      color: var(--text-2);
+    }
+
+    /* Сегментные переключатели */
+    .seg-control {
+      display: grid;
+      gap: 5px;
+      background: var(--bg);
+      padding: 4px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      margin-bottom: 10px;
+    }
+
+    .seg-2 { grid-template-columns: repeat(2, 1fr); }
+    .seg-3 { grid-template-columns: repeat(3, 1fr); }
+    .seg-4 { grid-template-columns: repeat(2, 1fr); }
+
+    @media (min-width: 390px) {
+      .seg-4 { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    .seg-btn {
+      min-height: 44px;
+      padding: 6px 5px;
+      border-radius: 9px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      line-height: 1.2;
+    }
+
+    .seg-btn.active {
+      background: var(--surface-3);
+      color: var(--text);
+      border: 1px solid var(--border-strong);
+    }
+
+    .seg-btn.active-lime {
+      background: var(--lime-dim);
+      color: var(--lime);
+      border: 1px solid var(--lime-border);
+    }
+
+    .ex-comp-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      background: var(--amber-dim);
+      border: 1px solid var(--amber-border);
+      color: #FFE49E;
+      font-size: 11.5px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .autopilot-grip-box {
+      padding: 9px 11px;
+      border-radius: var(--radius-md);
+      background: rgba(200, 255, 0, 0.06);
+      border: 1px solid var(--lime-border);
+      font-size: 12px;
+      color: #EBFFAB;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    /* Строки подходов */
+    .sets-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .set-box {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 12px;
+      transition: border-color 0.2s ease, background-color 0.2s ease;
+    }
+
+    .set-box.completed {
+      background: rgba(200, 255, 0, 0.045);
+      border-color: rgba(200, 255, 0, 0.3);
+    }
+
+    .set-box.current {
+      border-color: rgba(0, 229, 255, 0.42);
+    }
+
+    .set-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      gap: 8px;
+    }
+
+    .set-index {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13.5px;
+      font-weight: 700;
+    }
+
+    .set-dot {
+      width: 24px;
+      height: 24px;
+      border-radius: 7px;
+      background: var(--surface-3);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--text-2);
+    }
+
+    .set-box.completed .set-dot {
+      background: var(--lime);
+      color: #09090C;
+    }
+
+    .set-target {
+      font-size: 12px;
+      color: var(--cyan);
+      font-weight: 800;
+      background: var(--cyan-dim);
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--cyan-border);
+    }
+
+    .set-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .stepper {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--bg);
+      padding: 3px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-strong);
+    }
+
+    .step-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 9px;
+      background: var(--surface-2);
+      color: var(--text);
+      font-size: 21px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .rep-input {
+      width: 48px;
+      height: 44px;
+      text-align: center;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-size: 20px;
+      font-weight: 800;
+      font-family: inherit;
+      outline: none;
+      -moz-appearance: textfield;
+    }
+
+    .rep-input::-webkit-inner-spin-button,
+    .rep-input::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+    }
+
+    .log-set-btn {
+      flex: 1;
+      min-height: 50px;
+      border-radius: var(--radius-md);
+      background: var(--lime);
+      color: #09090C;
+      font-size: 13.5px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .log-set-btn.logged {
+      background: var(--surface-3);
+      color: var(--lime);
+      border: 1px solid var(--lime-border);
+    }
+
+    .rir-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+
+    .rir-btn {
+      min-height: 44px;
+      padding: 6px 3px;
+      border-radius: 9px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--text-2);
+      text-align: center;
+      line-height: 1.15;
+    }
+
+    .rir-btn small {
+      display: block;
+      font-size: 9.5px;
+      font-weight: 600;
+      opacity: 0.85;
+      margin-top: 2px;
+    }
+
+    .rir-btn.active-0 { background: var(--coral-dim); border-color: var(--coral); color: #FF8AA0; }
+    .rir-btn.active-1 { background: var(--amber-dim); border-color: var(--amber); color: #FFD257; }
+    .rir-btn.active-2 { background: var(--lime-dim); border-color: var(--lime); color: var(--lime); }
+    .rir-btn.active-3 { background: var(--cyan-dim); border-color: var(--cyan); color: var(--cyan); }
+
+    .science-note {
+      margin-top: 9px;
+      padding: 8px 10px;
+      border-radius: 9px;
+      background: rgba(0, 229, 255, 0.08);
+      border-left: 3px solid var(--cyan);
+      font-size: 11.5px;
+      color: #D8FAFF;
+      line-height: 1.38;
+    }
+
+    .science-note.warn {
+      background: var(--coral-dim);
+      border-left-color: var(--coral);
+      color: #FFD1DA;
+    }
+
+    .science-note.amber {
+      background: var(--amber-dim);
+      border-left-color: var(--amber);
+      color: #FFE7A8;
+    }
+
+    .science-note.opt {
+      background: var(--lime-dim);
+      border-left-color: var(--lime);
+      color: #EEFFB8;
+    }
+
+    /* ==========================================================================
+       3. ПЛАВАЮЩИЙ ТАЙМЕР ОТДЫХА
+       ========================================================================== */
+    .rest-bar {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%) translateY(150%);
+      bottom: calc(var(--nav-height) + var(--safe-bottom) + 10px);
+      width: calc(100% - 24px);
+      max-width: 476px;
+      background: rgba(20, 20, 26, 0.96);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      border: 1px solid var(--lime-border);
+      border-radius: 18px;
+      padding: 12px 14px;
+      z-index: 90;
+      box-shadow: 0 12px 34px rgba(0, 0, 0, 0.72);
+      transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .rest-bar.visible {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .rest-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 9px;
+    }
+
+    .rest-time {
+      font-size: 25px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      color: var(--lime);
+      letter-spacing: -0.02em;
+      line-height: 1.05;
+    }
+
+    .rest-time.paused {
+      color: var(--amber);
+    }
+
+    .rest-meta {
+      font-size: 11px;
+      color: var(--text-2);
+      margin-bottom: 2px;
+    }
+
+    .rest-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .rest-chip {
+      min-width: 44px;
+      min-height: 44px;
+      padding: 0 10px;
+      border-radius: 11px;
+      background: var(--surface-3);
+      border: 1px solid var(--border-strong);
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .rest-chip.skip {
+      background: var(--coral-dim);
+      border-color: var(--coral-border);
+      color: #FF8AA0;
+    }
+
+    .rest-track {
+      height: 4px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+    }
+
+    .rest-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--cyan), var(--lime));
+      width: 100%;
+      transition: width 0.3s linear;
+    }
+
+    /* ==========================================================================
+       4. ВКЛАДКА «АТЛАС» (Анатомический SVG)
+       ========================================================================== */
+    .atlas-stage {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      align-items: center;
+      justify-items: center;
+      padding: 6px 0 4px;
+    }
+
+    .atlas-stage.single {
+      grid-template-columns: 1fr;
+    }
+
+    .body-panel {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .body-label {
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 4px;
+    }
+
+    .body-svg {
+      width: 100%;
+      max-width: 205px;
+      height: auto;
+      display: block;
+      user-select: none;
+    }
+
+    .atlas-stage.single .body-svg {
+      max-width: 255px;
+    }
+
+    .muscle-group {
+      cursor: pointer;
+    }
+
+    .muscle-group path,
+    .muscle-group rect {
+      transition: fill 0.3s ease, stroke 0.25s ease;
+    }
+
+    .muscle-group.selected path,
+    .muscle-group.selected rect {
+      stroke: #FFFFFF !important;
+      stroke-width: 2 !important;
+    }
+
+    @keyframes dashPulse {
+      0%, 100% { stroke-opacity: 0.95; }
+      50% { stroke-opacity: 0.3; }
+    }
+
+    .delt-remind path {
+      stroke: var(--amber) !important;
+      stroke-width: 1.8 !important;
+      stroke-dasharray: 4 3 !important;
+      animation: dashPulse 1.8s ease-in-out infinite;
+    }
+
+    .heat-legend {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--text-2);
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .legend-swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+    }
+
+    .inspector-card {
+      background: linear-gradient(160deg, #171720, #121218);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-xl);
+      padding: 15px;
+      margin-top: 12px;
+    }
+
+    .inspector-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin: 12px 0;
+    }
+
+    .mini-stat {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+    }
+
+    .mini-stat-label {
+      font-size: 11px;
+      color: var(--text-2);
+    }
+
+    .mini-stat-val {
+      font-size: 18px;
+      font-weight: 800;
+      margin-top: 2px;
+    }
+
+    /* ==========================================================================
+       5. ВКЛАДКА «СУШКА» (Дашборд, Шкала темпа, Белок, График)
+       ========================================================================== */
+    .cut-hero-row {
+      display: grid;
+      grid-template-columns: 112px 1fr;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .ring-box {
+      position: relative;
+      width: 112px;
+      height: 112px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ring-center {
+      position: absolute;
+      text-align: center;
+    }
+
+    .metric-big {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+
+    .metric-unit {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-2);
+      margin-left: 2px;
+    }
+
+    .progress-bar-wrap {
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+      margin-top: 6px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* Шкала безопасного коридора сушки */
+    .gauge-track {
+      position: relative;
+      height: 10px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(0,229,255,0.45) 0%, rgba(0,229,255,0.45) 28%, rgba(200,255,0,0.8) 28%, rgba(200,255,0,0.8) 68%, rgba(255,77,109,0.85) 68%, rgba(255,77,109,0.85) 100%);
+      margin: 12px 0 6px;
+    }
+
+    .gauge-thumb {
+      position: absolute;
+      top: 50%;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      border: 3px solid #09090C;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.65);
+      transition: left 0.4s ease;
+    }
+
+    .gauge-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--text-3);
+      font-weight: 700;
+    }
+
+    .protein-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 13px;
+      border-radius: var(--radius-lg);
+      background: var(--surface-2);
+      border: 1px solid var(--border-strong);
+      margin-top: 12px;
+      width: 100%;
+      text-align: left;
+    }
+
+    .protein-banner.checked {
+      background: rgba(200, 255, 0, 0.08);
+      border-color: var(--lime-border);
+    }
+
+    .measure-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .measure-pill {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 11px 8px;
+      text-align: center;
+    }
+
+    .chart-wrap {
+      width: 100%;
+      overflow: hidden;
+      padding-top: 4px;
+    }
+
+    .chart-svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* Формы и инпуты */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .form-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .field label {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--text-2);
+    }
+
+    .field.primary label {
+      color: var(--lime);
+    }
+
+    .input {
+      width: 100%;
+      min-height: 44px;
+      padding: 10px 12px;
+      border-radius: var(--radius-md);
+      background: var(--bg);
+      border: 1px solid var(--border-strong);
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 700;
+      font-family: inherit;
+      outline: none;
+    }
+
+    .input:focus {
+      border-color: var(--lime);
+    }
+
+    .accordion-btn {
+      width: 100%;
+      min-height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 13px;
+      border-radius: var(--radius-md);
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-2);
+      margin-top: 12px;
+    }
+
+    .accordion-body {
+      display: none;
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+    }
+
+    .accordion-body.open {
+      display: block;
+    }
+
+    /* ==========================================================================
+       6. ВКЛАДКА «ПРОГРЕСС» И ЖУРНАЛ
+       ========================================================================== */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .metric-tile {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 13px;
+    }
+
+    .pr-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      gap: 10px;
+    }
+
+    .pr-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .history-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 13px;
+      margin-bottom: 10px;
+    }
+
+    .history-head {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      text-align: left;
+      min-height: 44px;
+    }
+
+    .history-details {
+      display: none;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+    }
+
+    .history-details.open {
+      display: block;
+    }
+
+    .history-ex-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12.5px;
+      padding: 5px 0;
+      gap: 8px;
+    }
+
+    .steps-guide {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .steps-guide li {
+      display: flex;
+      gap: 10px;
+      font-size: 12.5px;
+      color: var(--text-2);
+      line-height: 1.45;
+    }
+
+    .step-num {
+      flex-shrink: 0;
+      width: 24px;
+      height: 24px;
+      border-radius: 7px;
+      background: var(--lime-dim);
+      color: var(--lime);
+      font-size: 12px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ==========================================================================
+       7. НИЖНЯЯ НАВИГАЦИЯ (Safe-area iPhone)
+       ========================================================================== */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 500px;
+      background: rgba(11, 11, 15, 0.9);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      padding: 6px 8px calc(8px + var(--safe-bottom));
+      z-index: 100;
+    }
+
+    .nav-item {
+      min-height: 52px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      color: var(--text-3);
+      font-size: 10.5px;
+      font-weight: 700;
+      border-radius: 12px;
+    }
+
+    .nav-item svg {
+      width: 22px;
+      height: 22px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: transform 0.16s ease;
+    }
+
+    .nav-item.active {
+      color: var(--lime);
+    }
+
+    .nav-item.active svg {
+      transform: translateY(-1px);
+      filter: drop-shadow(0 0 8px rgba(200, 255, 0, 0.45));
+    }
+
+    /* ==========================================================================
+       8. TOAST И МОДАЛЬНЫЕ ОКНА
+       ========================================================================== */
+    .toast {
+      position: fixed;
+      top: calc(14px + var(--safe-top));
+      left: 50%;
+      transform: translateX(-50%) translateY(-130px);
+      max-width: calc(100% - 32px);
+      width: 440px;
+      background: rgba(20, 20, 28, 0.97);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid var(--lime-border);
+      border-radius: 14px;
+      padding: 13px 15px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      z-index: 230;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7);
+      transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.74);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 200;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 12px;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-sheet {
+      width: 100%;
+      max-width: 472px;
+      max-height: 88vh;
+      overflow-y: auto;
+      background: #14141C;
+      border: 1px solid var(--border-strong);
+      border-radius: 24px;
+      padding: 20px 18px calc(18px + var(--safe-bottom));
+      animation: sheetUp 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    @keyframes sheetUp {
+      from { transform: translateY(42px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .modal-actions > button {
+      flex: 1;
+    }
+
+    .flex-between { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .text-lime { color: var(--lime); }
+    .text-cyan { color: var(--cyan); }
+    .text-amber { color: var(--amber); }
+    .text-coral { color: #FF8AA0; }
+    .text-muted { color: var(--text-2); }
+    .fw-800 { font-weight: 800; }
+    .mt-10 { margin-top: 10px; }
+    .mt-12 { margin-top: 12px; }
+  </style>
+</head>
+<body>
+
+  <!-- Всплывающее уведомление -->
+  <div id="toast" class="toast" role="status" aria-live="polite">
+    <span id="toast-dot" class="status-dot"></span>
+    <span id="toast-text">Готово</span>
+  </div>
+
+  <!-- Универсальное модальное окно -->
+  <div id="modal-backdrop" class="modal-backdrop" onclick="if(event.target===this) closeModal()">
+    <div class="modal-sheet" id="modal-content"></div>
+  </div>
+
+  <!-- Основная оболочка -->
+  <div class="app-shell">
+
+    <!-- Верхняя шапка -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-logo" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 64 64">
+            <path d="M10 12 L32 54 L54 12 L42 12 L32 33 L22 12 Z" fill="#C8FF00"/>
+            <circle cx="32" cy="11" r="4.5" fill="#00E5FF"/>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-title">VECTRA</div>
+          <div class="brand-sub" id="topbar-date">Автопилот тренировок</div>
+        </div>
+      </div>
+      <button class="status-pill" onclick="openProfileModal()" title="Параметры и цели">
+        <span class="status-dot"></span>
+        <span id="topbar-weight-pill">74.7 → 71.0 кг</span>
+      </button>
+    </header>
+
+    <!-- =====================================================================
+         ВКЛАДКА 1: ТРЕНИРОВКА (АВТОПИЛОТ + RIR + КОМПЕНСАЦИЯ СУШКИ)
+         ===================================================================== -->
+    <main id="tab-workout" class="tab-view active">
+      <!-- Главная карточка Автопилота -->
+      <section class="card card-hero" id="autopilot-hero-card"></section>
+
+      <!-- Карточки 4 упражнений -->
+      <div id="exercises-container"></div>
+
+      <!-- Завершение тренировки -->
+      <section class="card" style="border-color: var(--lime-border); background: linear-gradient(180deg, rgba(200,255,0,0.06), var(--surface));">
+        <div class="flex-between" style="margin-bottom: 12px;">
+          <div>
+            <div class="card-title">Итог тренировки</div>
+            <div class="card-subtitle" id="session-live-summary">Выполнено 0 подх. · Тоннаж 0 кг</div>
+          </div>
+          <button class="btn-secondary" style="min-height:44px; padding: 0 12px;" onclick="switchTab('atlas')">Атлас →</button>
+        </div>
+        <button id="finish-workout-btn" class="btn-primary" onclick="finishWorkout()">
+          Завершить тренировку
+        </button>
+      </section>
+    </main>
+
+    <!-- =====================================================================
+         ВКЛАДКА 2: АТЛАС (Интерактивный анатомический человечек)
+         ===================================================================== -->
+    <section id="tab-atlas" class="tab-view">
+      <div class="card">
+        <div class="card-header" style="margin-bottom: 10px;">
+          <div>
+            <div class="card-title">Анатомический атлас</div>
+            <div class="card-subtitle">Тапни по мышце: недельный объём и восстановление</div>
+          </div>
+          <span id="atlas-today-badge" class="badge badge-cyan">Live-карта</span>
+        </div>
+
+        <div class="seg-control seg-3" id="atlas-view-toggle">
+          <button class="seg-btn active" data-view="both" onclick="setAtlasView('both')">Оба вида</button>
+          <button class="seg-btn" data-view="front" onclick="setAtlasView('front')">Спереди</button>
+          <button class="seg-btn" data-view="back" onclick="setAtlasView('back')">Сзади</button>
+        </div>
+
+        <div style="font-size: 10.5px; color: var(--text-3); font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; margin: 2px 2px 6px;">
+          Живой превью хвата подтягиваний:
+        </div>
+        <div class="seg-control seg-4" id="atlas-grip-preview"></div>
+
+        <!-- Векторный SVG-силуэт (Спереди и Сзади) -->
+        <div class="atlas-stage" id="atlas-stage">
+          <!-- ВИД СПЕРЕДИ -->
+          <div class="body-panel" id="panel-front">
+            <div class="body-label">Спереди</div>
+            <svg class="body-svg" viewBox="0 0 220 400" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <filter id="glow-lime" x="-25%" y="-25%" width="150%" height="150%">
+                  <feGaussianBlur stdDeviation="3.5" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+                <filter id="glow-coral" x="-25%" y="-25%" width="150%" height="150%">
+                  <feGaussianBlur stdDeviation="4" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+                <filter id="glow-cyan" x="-25%" y="-25%" width="150%" height="150%">
+                  <feGaussianBlur stdDeviation="3" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+
+              <!-- Базовый контур -->
+              <g fill="#16161F" stroke="rgba(255,255,255,0.14)" stroke-width="1.2">
+                <path d="M110 14 C122 14 128 24 127 37 C126 49 119 56 110 57 C101 56 94 49 93 37 C92 24 98 14 110 14 Z"/>
+                <path d="M99 54 L97 68 L77 77 L143 77 L123 68 L121 54 Z"/>
+                <path d="M77 204 L143 204 L148 232 L113 239 L107 239 L72 232 Z" fill="#121219"/>
+                <path d="M36 196 L46 198 L44 217 L34 214 Z"/>
+                <path d="M184 196 L174 198 L176 217 L186 214 Z"/>
+              </g>
+
+              <!-- НОГИ СПЕРЕДИ (Вне фокуса) -->
+              <g class="muscle-group" data-muscle="legs" onclick="selectMuscle('legs')">
+                <path d="M73 234 L106 240 L103 308 L96 312 L78 308 L71 268 Z" fill="#12121A" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+                <path d="M147 234 L114 240 L117 308 L124 312 L142 308 L149 268 Z" fill="#12121A" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+                <path d="M79 314 L97 316 L94 384 L82 386 L76 348 Z" fill="#101017" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                <path d="M141 314 L123 316 L126 384 L138 386 L144 348 Z" fill="#101017" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                <rect x="65" y="271" width="90" height="19" rx="9" fill="#0E0E14" stroke="rgba(255,255,255,0.12)" stroke-width="0.9"/>
+                <text x="110" y="283.5" text-anchor="middle" font-size="8.2" fill="rgba(255,255,255,0.42)" font-weight="800" letter-spacing="0.06em">ВНЕ ФОКУСА</text>
+              </g>
+
+              <!-- ПЕРЕДНИЕ ДЕЛЬТЫ -->
+              <g class="muscle-group" data-muscle="front_delts" onclick="selectMuscle('front_delts')">
+                <path d="M77 77 C61 79 52 92 52 109 C58 115 67 113 73 104 C75 94 76 86 77 77 Z"/>
+                <path d="M143 77 C159 79 168 92 168 109 C162 115 153 113 147 104 C145 94 144 86 143 77 Z"/>
+              </g>
+
+              <!-- ГРУДНЫЕ -->
+              <g class="muscle-group" data-muscle="chest" onclick="selectMuscle('chest')">
+                <path d="M78 78 L108 82 L108 122 C96 125 81 122 73 110 C74 98 76 87 78 78 Z"/>
+                <path d="M142 78 L112 82 L112 122 C124 125 139 122 147 110 C146 98 144 87 142 78 Z"/>
+              </g>
+
+              <!-- БИЦЕПС И БРАХИАЛИС -->
+              <g class="muscle-group" data-muscle="biceps" onclick="selectMuscle('biceps')">
+                <path d="M53 112 C60 116 68 114 71 108 L68 148 C61 153 52 150 48 142 C48 130 50 120 53 112 Z"/>
+                <path d="M167 112 C160 116 152 114 149 108 L152 148 C159 153 168 150 172 142 C172 130 170 120 167 112 Z"/>
+              </g>
+
+              <!-- ПРЕДПЛЕЧЬЯ -->
+              <g class="muscle-group" data-muscle="forearms" onclick="selectMuscle('forearms')">
+                <path d="M48 146 C55 153 63 153 66 150 L50 196 L38 193 C39 175 43 158 48 146 Z"/>
+                <path d="M172 146 C165 153 157 153 154 150 L170 196 L182 193 C181 175 177 158 172 146 Z"/>
+              </g>
+
+              <!-- ПРЕСС И КОР -->
+              <g class="muscle-group" data-muscle="abs" onclick="selectMuscle('abs')">
+                <path d="M75 123 L90 127 L88 198 L77 198 C74 174 73 147 75 123 Z"/>
+                <path d="M145 123 L130 127 L132 198 L143 198 C146 174 147 147 145 123 Z"/>
+                <rect x="93" y="127" width="15" height="17" rx="4"/>
+                <rect x="112" y="127" width="15" height="17" rx="4"/>
+                <rect x="93" y="147" width="15" height="17" rx="4"/>
+                <rect x="112" y="147" width="15" height="17" rx="4"/>
+                <rect x="94" y="167" width="14" height="15" rx="4"/>
+                <rect x="112" y="167" width="14" height="15" rx="4"/>
+                <path d="M95 185 L125 185 L120 202 L100 202 Z"/>
+              </g>
+            </svg>
+          </div>
+
+          <!-- ВИД СЗАДИ -->
+          <div class="body-panel" id="panel-back">
+            <div class="body-label">Сзади</div>
+            <svg class="body-svg" viewBox="0 0 220 400" xmlns="http://www.w3.org/2000/svg">
+              <!-- Базовый контур спины -->
+              <g fill="#16161F" stroke="rgba(255,255,255,0.14)" stroke-width="1.2">
+                <path d="M110 14 C122 14 128 24 127 37 C126 48 120 54 110 55 C100 54 94 48 93 37 C92 24 98 14 110 14 Z"/>
+                <path d="M100 53 L120 53 L123 68 L97 68 Z"/>
+                <path d="M88 180 L110 172 L132 180 L130 202 L90 202 Z" fill="#15151E"/>
+                <path d="M77 202 L143 202 L148 236 C135 244 118 242 110 234 C102 242 85 244 72 236 Z" fill="#121219"/>
+                <path d="M36 196 L46 198 L44 217 L34 214 Z"/>
+                <path d="M184 196 L174 198 L176 217 L186 214 Z"/>
+              </g>
+
+              <!-- НОГИ СЗАДИ (Вне фокуса) -->
+              <g class="muscle-group" data-muscle="legs" onclick="selectMuscle('legs')">
+                <path d="M73 238 L107 238 L103 308 L78 308 L71 268 Z" fill="#12121A" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+                <path d="M147 238 L113 238 L117 308 L142 308 L149 268 Z" fill="#12121A" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+                <path d="M79 313 L98 314 L94 384 L82 386 L76 348 Z" fill="#101017" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                <path d="M141 313 L122 314 L126 384 L138 386 L144 348 Z" fill="#101017" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                <rect x="65" y="271" width="90" height="19" rx="9" fill="#0E0E14" stroke="rgba(255,255,255,0.12)" stroke-width="0.9"/>
+                <text x="110" y="283.5" text-anchor="middle" font-size="8.2" fill="rgba(255,255,255,0.42)" font-weight="800" letter-spacing="0.06em">ВНЕ ФОКУСА</text>
+              </g>
+
+              <!-- ВЕРХ СПИНЫ (Трапеции, ромбовидные, задняя дельта) -->
+              <g class="muscle-group" data-muscle="upper_back" onclick="selectMuscle('upper_back')">
+                <path d="M110 64 L142 77 L130 118 L110 132 L90 118 L78 77 Z"/>
+                <path d="M77 77 C61 79 52 92 52 108 C60 113 69 111 76 102 Z"/>
+                <path d="M143 77 C159 79 168 92 168 108 C160 113 151 111 144 102 Z"/>
+              </g>
+
+              <!-- ШИРОЧАЙШИЕ (включая верх «крыльев» Teres Major) -->
+              <g class="muscle-group" data-muscle="lats" onclick="selectMuscle('lats')">
+                <path d="M75 104 L91 118 L108 134 L106 174 L83 182 C73 160 69 132 75 104 Z"/>
+                <path d="M145 104 L129 118 L112 134 L114 174 L137 182 C147 160 151 132 145 104 Z"/>
+              </g>
+
+              <!-- ТРИЦЕПС -->
+              <g class="muscle-group" data-muscle="triceps" onclick="selectMuscle('triceps')">
+                <path d="M52 111 C60 115 67 113 71 107 L68 150 C60 155 52 152 48 144 C48 132 50 120 52 111 Z"/>
+                <path d="M168 111 C160 115 153 113 149 107 L152 150 C160 155 168 152 172 144 C172 132 170 120 168 111 Z"/>
+              </g>
+
+              <!-- ПРЕДПЛЕЧЬЯ СЗАДИ -->
+              <g class="muscle-group" data-muscle="forearms" onclick="selectMuscle('forearms')">
+                <path d="M48 147 C56 154 63 153 66 150 L50 196 L38 193 C39 175 43 159 48 147 Z"/>
+                <path d="M172 147 C164 154 157 153 154 150 L170 196 L182 193 C181 175 177 159 172 147 Z"/>
+              </g>
+            </svg>
+          </div>
+        </div>
+
+        <div class="heat-legend">
+          <span class="legend-item"><span class="legend-swatch" style="background:#21222D; border:1px solid rgba(255,255,255,0.18);"></span>Свежие</span>
+          <span class="legend-item"><span class="legend-swatch" style="background:#00E5FF;"></span>Синергист / Превью</span>
+          <span class="legend-item"><span class="legend-swatch" style="background:#C8FF00;"></span>Активно</span>
+          <span class="legend-item"><span class="legend-swatch" style="background:#FF4D6D;"></span>Пик сегодня</span>
+        </div>
+      </div>
+
+      <!-- Карточка-инспектор выбранной мышцы -->
+      <div id="muscle-inspector" class="inspector-card"></div>
+    </section>
+
+    <!-- =====================================================================
+         ВКЛАДКА 3: СУШКА (Трекер 74.7 → 71.0 кг, Коридор, Белок, График)
+         ===================================================================== -->
+    <section id="tab-cut" class="tab-view">
+      <!-- Главный дашборд сушки -->
+      <div class="card card-hero" id="cut-hero-card"></div>
+
+      <!-- Полоска замеров -->
+      <div class="measure-strip" id="cut-measure-strip"></div>
+
+      <!-- График динамики веса и % жира -->
+      <div class="card">
+        <div class="flex-between" style="margin-bottom: 10px;">
+          <div>
+            <div class="card-title">Тренд сушки и прогноз</div>
+            <div class="card-subtitle" id="cut-chart-sub">Вес тела и пунктирный прогноз к 71.0 кг</div>
+          </div>
+          <div class="seg-control seg-2" style="margin:0; width: 156px;">
+            <button class="seg-btn active" style="min-height:36px;" id="chart-mode-weight" onclick="setCutChartMode('weight')">Вес</button>
+            <button class="seg-btn" style="min-height:36px;" id="chart-mode-fat" onclick="setCutChartMode('fat')">% Жира</button>
+          </div>
+        </div>
+        <div id="cut-chart-container" class="chart-wrap"></div>
+      </div>
+
+      <!-- Кнопка добавления замера -->
+      <button class="btn-primary" style="margin-bottom: 14px;" onclick="openAddWeighinModal()">
+        + Добавить замер (весы / лента)
+      </button>
+
+      <!-- История взвешиваний -->
+      <div class="section-label">История замеров</div>
+      <div id="weighin-history-list"></div>
+    </section>
+
+    <!-- =====================================================================
+         ВКЛАДКА 4: ПРОГРЕСС (График силы/объёма, Рекорды, Журнал, GitHub PWA)
+         ===================================================================== -->
+    <section id="tab-progress" class="tab-view">
+      <!-- KPI-сводка -->
+      <div class="kpi-grid" id="progress-kpi-grid"></div>
+
+      <!-- График объёма и Индекса Относительной Силы -->
+      <div class="card">
+        <div class="flex-between" style="margin-bottom: 10px;">
+          <div>
+            <div class="card-title">Объём и Относительная сила</div>
+            <div class="card-subtitle" id="prog-chart-sub">Индекс силы (RSI) и эффективный тоннаж</div>
+          </div>
+          <div class="seg-control seg-2" style="margin:0; width: 174px;">
+            <button class="seg-btn active" style="min-height:36px;" id="prog-mode-rsi" onclick="setProgressChartMode('rsi')">Сила (RSI)</button>
+            <button class="seg-btn" style="min-height:36px;" id="prog-mode-vol" onclick="setProgressChartMode('volume')">Повторения</button>
+          </div>
+        </div>
+        <div id="progress-chart-container" class="chart-wrap"></div>
+      </div>
+
+      <!-- Личные рекорды -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Личные рекорды (All-Time PR)</div>
+            <div class="card-subtitle">Исторический прайм и лучшие чистые подходы</div>
+          </div>
+          <button class="badge badge-cyan" style="min-height:34px;" onclick="openRecordsModal()">Изменить ✎</button>
+        </div>
+        <div id="records-list"></div>
+      </div>
+
+      <!-- Журнал тренировок -->
+      <div class="flex-between" style="margin: 18px 4px 9px;">
+        <div class="section-label" style="margin:0;">Журнал тренировок</div>
+        <span style="font-size: 11px; color: var(--text-3);">Нажми для деталей</span>
+      </div>
+      <div id="workout-history-list"></div>
+
+      <!-- Настройки, Бэкап и Памятка GitHub Pages -->
+      <div class="card mt-12">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Настройки и Бэкап</div>
+            <div class="card-subtitle">100% локальное хранение в памяти iPhone</div>
+          </div>
+          <button class="badge badge-muted" style="min-height:34px;" id="settings-sound-btn" onclick="toggleSound()">🔊 Звук вкл.</button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+          <button class="btn-secondary" onclick="exportBackup()">⬇ Экспорт JSON</button>
+          <button class="btn-secondary" onclick="document.getElementById('import-file-input').click()">⬆ Импорт JSON</button>
+          <input type="file" id="import-file-input" accept="application/json,.json" style="display:none" onchange="importBackupFile(event)">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <button class="btn-secondary" onclick="copyBackupToClipboard()">📋 Копировать JSON</button>
+          <button class="btn-danger" onclick="confirmResetAll()">↺ Сбросить всё</button>
+        </div>
+
+        <button type="button" class="accordion-btn" onclick="toggleAccordion('pwa-guide-acc', this)">
+          <span>📱 Памятка: GitHub Pages + iPhone</span>
+          <span class="acc-arrow">▾</span>
+        </button>
+        <div id="pwa-guide-acc" class="accordion-body">
+          <ol class="steps-guide">
+            <li><span class="step-num">1</span><span>Создай публичный репозиторий на <b>GitHub</b> (например, <code>vectra</code>) и загрузи этот файл строго под именем <b>index.html</b>.</span></li>
+            <li><span class="step-num">2</span><span>Открой <b>Settings → Pages</b> → Source: <b>Deploy from a branch</b> → Branch: <b>main</b> (<code>/root</code>) → <b>Save</b>.</span></li>
+            <li><span class="step-num">3</span><span>Через 1–2 минуты открой ссылку <code>https://твой-ник.github.io/vectra/</code> в <b>Safari</b> на iPhone.</span></li>
+            <li><span class="step-num">4</span><span>Нажми внизу <b>«Поделиться»</b> (квадрат со стрелкой) → <b>«На экран «Домой»»</b> → <b>«Добавить»</b>. Иконка VECTRA появится на рабочем столе и заработает оффлайн.</span></li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /app-shell -->
+
+  <!-- Плавающая панель таймера отдыха -->
+  <div id="rest-bar" class="rest-bar" aria-live="polite">
+    <div class="rest-top">
+      <div>
+        <div class="rest-meta" id="rest-label">Отдых · Подтягивания</div>
+        <div class="rest-time" id="rest-countdown">02:00</div>
+      </div>
+      <div class="rest-actions">
+        <button class="rest-chip" id="rest-pause-btn" onclick="toggleRestPause()" title="Пауза / Старт">⏸</button>
+        <button class="rest-chip" onclick="adjustRest(30)">+30с</button>
+        <button class="rest-chip skip" onclick="stopRestTimer()">Стоп</button>
+      </div>
+    </div>
+    <div class="rest-track"><div id="rest-fill" class="rest-fill"></div></div>
+  </div>
+
+  <!-- Нижняя навигация (4 вкладки) -->
+  <nav class="bottom-nav" aria-label="Навигация">
+    <button class="nav-item active" data-tab="workout" onclick="switchTab('workout')">
+      <svg viewBox="0 0 24 24"><path d="M6.5 6.5h11M6.5 17.5h11M4 10v4M20 10v4M8 7v10M16 7v10"/></svg>
+      <span>Тренировка</span>
+    </button>
+    <button class="nav-item" data-tab="atlas" onclick="switchTab('atlas')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.5"/><path d="M8 10h8l1.5 6-2.5.5L14 13v8h-4v-8l-1 3.5-2.5-.5L8 10z"/></svg>
+      <span>Атлас</span>
+    </button>
+    <button class="nav-item" data-tab="cut" onclick="switchTab('cut')">
+      <svg viewBox="0 0 24 24"><path d="M12 3v18M4 15l4-4 4 3 4-6 4 2"/><circle cx="16" cy="8" r="1.5" fill="currentColor"/></svg>
+      <span>Сушка</span>
+    </button>
+    <button class="nav-item" data-tab="progress" onclick="switchTab('progress')">
+      <svg viewBox="0 0 24 24"><path d="M4 19h16M7 15v-4M12 15V7M17 15v-6"/></svg>
+      <span>Прогресс</span>
+    </button>
+  </nav>
+
+  <script>
+    /* ==========================================================================
+       VECTRA v2 — SCIENTIFIC AUTOPILOT ENGINE
+       100% Vanilla JS · Offline-ready · Zero Dependencies
+       ========================================================================== */
+
+    const STORAGE_KEY = 'vectra_v2_state';
+
+    // Эффективные коэффициенты нагрузки (доля веса тела)
+    const LOAD_FACTORS = {
+      pullups: 1.0,
+      pushups: 0.65,
+      legraises: 0.35,
+      pike: 0.72
+    };
+
+    // 4 хвата подтягиваний с дробными весами вовлечения мышц (Fractional Volume)
+    const PULLUP_GRIPS = {
+      pronated: {
+        id: 'pronated',
+        name: 'Обычный',
+        short: 'Обычный',
+        focus: 'Баланс широчайших и верха спины',
+        autoReason: 'Обычный хват — универсальный стимул на широчайшие и верх спины без перегруза локтей',
+        muscles: { lats: 1.0, upper_back: 0.7, biceps: 0.5, forearms: 0.5 }
+      },
+      wide: {
+        id: 'wide',
+        name: 'Широкий',
+        short: 'Широкий',
+        focus: 'Ширина спины (V-силуэт) + верх спины',
+        autoReason: 'Широкий хват — акцент на ширину спины, бицепс отдыхает после прошлого раза',
+        muscles: { lats: 1.0, upper_back: 0.8, biceps: 0.35, forearms: 0.5 }
+      },
+      supinated: {
+        id: 'supinated',
+        name: 'Обратный',
+        short: 'Обратный',
+        focus: 'Пиковый бицепс + нижние широчайшие',
+        autoReason: 'Обратный хват — максимальный стимул для бицепса и растяжение широчайших',
+        muscles: { lats: 0.8, biceps: 1.0, forearms: 0.5, upper_back: 0.4 }
+      },
+      neutral: {
+        id: 'neutral',
+        name: 'Параллельный',
+        short: 'Параллельный',
+        focus: 'Брахиалис + бицепс + комфорт плеч',
+        autoReason: 'Параллельный хват — мощная работа брахиалиса и предплечий при безопасном угле плеча',
+        muscles: { lats: 0.9, biceps: 0.85, forearms: 0.6, upper_back: 0.55 }
+      }
+    };
+
+    const GRIP_ROTATION = ['pronated', 'wide', 'supinated', 'neutral'];
+
+    // Упражнения и их физиологические параметры
+    const EXERCISES = {
+      pullups: {
+        id: 'pullups',
+        name: 'Подтягивания на турнике',
+        defaultRest: 120,
+        fatigueDrop: 0.12, // ~12% падение между подходами
+        note: 'Чистая амплитуда без рывков, подбородок выше перекладины'
+      },
+      pushups: {
+        id: 'pushups',
+        name: 'Отжимания от пола',
+        defaultRest: 90,
+        fatigueDrop: 0.10, // ~10%
+        muscles: { chest: 1.0, triceps: 0.75, front_delts: 0.6, abs: 0.25 },
+        note: 'Корпус прямой, локти под ~45°, грудь касается пола'
+      },
+      legraises: {
+        id: 'legraises',
+        name: 'Подъём ног к турнику',
+        defaultRest: 90,
+        fatigueDrop: 0.21, // реалистичное крутое падение 10 → 8 → 6
+        muscles: { abs: 1.0, forearms: 0.65, lats: 0.25 },
+        note: 'Подкручивай таз вверх, опускай подконтрольно без раскачки'
+      },
+      pike: {
+        id: 'pike',
+        name: 'Отжимания домиком',
+        defaultRest: 120,
+        fatigueDrop: 0.12,
+        muscles: { front_delts: 1.0, triceps: 0.75, upper_back: 0.35, chest: 0.3 },
+        note: 'Таз высоко вверх, вектор нагрузки прямо в передние и средние дельты'
+      }
+    };
+
+    // Справочник мышц для Анатомического Атласа (36–48ч MPS кривая восстановления)
+    const MUSCLES_META = {
+      lats: {
+        name: 'Широчайшие мышцы спины',
+        latin: 'Latissimus Dorsi',
+        mpsHours: 48,
+        exercises: ['Подтягивания (все 4 хвата — главный стимул)', 'Подъём ног к турнику (стабилизация плеча)']
+      },
+      upper_back: {
+        name: 'Верх спины и задние дельты',
+        latin: 'Trapezius, Rhomboids & Rear Delts',
+        mpsHours: 46,
+        exercises: ['Подтягивания широким и обычным хватом', 'Параллельный хват', 'Отжимания домиком (верх трапеции)']
+      },
+      biceps: {
+        name: 'Бицепс и брахиалис',
+        latin: 'Biceps Brachii & Brachialis',
+        mpsHours: 42,
+        exercises: ['Подтягивания обратным хватом (1.0×)', 'Параллельный хват (0.85×)', 'Обычный хват (0.5×)']
+      },
+      forearms: {
+        name: 'Предплечья и хват',
+        latin: 'Brachioradialis & Flexors',
+        mpsHours: 36,
+        exercises: ['Параллельный хват (0.6×)', 'Подъём ног в висе на турнике (0.65×)', 'Все виды подтягиваний']
+      },
+      chest: {
+        name: 'Грудные мышцы',
+        latin: 'Pectoralis Major',
+        mpsHours: 48,
+        exercises: ['Отжимания от пола (1.0×)', 'Отжимания домиком (верх груди, 0.3×)']
+      },
+      front_delts: {
+        name: 'Передние и средние дельты',
+        latin: 'Deltoideus Anterior & Lateralis',
+        mpsHours: 44,
+        exercises: ['Отжимания домиком (1.0× — ключ к объёму плеч)', 'Отжимания от пола (0.6×)']
+      },
+      triceps: {
+        name: 'Трицепс',
+        latin: 'Triceps Brachii',
+        mpsHours: 44,
+        exercises: ['Отжимания от пола (0.75×)', 'Отжимания домиком (0.75×)']
+      },
+      abs: {
+        name: 'Пресс и кор',
+        latin: 'Rectus Abdominis & Obliques',
+        mpsHours: 36,
+        exercises: ['Подъём ног к турнику (1.0× — пиковая нагрузка)', 'Отжимания (анти-прогиб, 0.25×)']
+      },
+      legs: {
+        name: 'Мышцы ног',
+        latin: 'Вне тренировочного фокуса',
+        mpsHours: 0,
+        outOfFocus: true,
+        exercises: ['Отключены по твоему запросу. Весь объём сфокусирован на V-образном верхе и рельефе.']
+      }
+    };
+
+    // Шкала готовности (1–5)
+    const READINESS_MAP = {
+      1: { label: 'Разбит', mult: 0.85, tag: 'Делоад −15%', note: 'Низкий ресурс ЦНС. Автопилот снизил цели на 15% — работаем чисто в тонус без отказов.' },
+      2: { label: 'Устал', mult: 0.92, tag: 'Мягко −8%', note: 'Лёгкое утомление. Цели снижены на 8% — держи RIR 2, чтобы не затормозить восстановление.' },
+      3: { label: 'Норма', mult: 1.00, tag: 'База 100%', note: 'Оптимальное состояние. Идём строго по плану, контролируя RIR после каждого подхода.' },
+      4: { label: 'Бодро', mult: 1.00, tag: 'Оптимум', note: 'Отличный тонус! Закроешь подходы с RIR ≥ 2 — автопилот поднимет базу на следующий раз.' },
+      5: { label: 'Прайм', mult: 1.05, tag: 'Пуш +5%', note: 'Пиковая энергия! Автопилот добавил +5% к старту — идеальный день для чистой прогрессии.' }
+    };
+
+    function getTodayISO() {
+      const d = new Date();
+      return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    }
+
+    // Расчёт эффективного тоннажа и индекса относительной силы (RSI)
+    function computeSessionMetrics(exercisesList, bodyweight) {
+      let totalReps = 0;
+      let effectiveTonnage = 0;
+      exercisesList.forEach(ex => {
+        const factor = LOAD_FACTORS[ex.id] || 0.5;
+        const exReps = ex.sets.reduce((sum, s) => sum + (parseInt(s.reps, 10) || 0), 0);
+        totalReps += exReps;
+        effectiveTonnage += exReps * bodyweight * factor;
+      });
+      const rsi = bodyweight > 0 ? effectiveTonnage / bodyweight : 0;
+      return {
+        totalReps,
+        effectiveTonnage: Math.round(effectiveTonnage),
+        rsi: Number(rsi.toFixed(1))
+      };
+    }
+
+    // Стартовое состояние с точными параметрами пользователя и 1 демо-тренировкой (2 дня назад)
+    function createDefaultState() {
+      const twoDaysAgoISO = new Date(Date.now() - 46 * 3600 * 1000).toISOString();
+      const demoExercises = [
+        {
+          id: 'pullups',
+          grip: 'pronated',
+          sets: [
+            { target: 10, reps: 10, rir: 2 },
+            { target: 9, reps: 9, rir: 1 },
+            { target: 8, reps: 8, rir: 1 }
+          ]
+        },
+        {
+          id: 'pushups',
+          sets: [
+            { target: 15, reps: 15, rir: 2 },
+            { target: 14, reps: 14, rir: 2 },
+            { target: 13, reps: 13, rir: 1 }
+          ]
+        },
+        {
+          id: 'legraises',
+          sets: [
+            { target: 10, reps: 10, rir: 2 },
+            { target: 8, reps: 8, rir: 1 },
+            { target: 6, reps: 6, rir: 0 }
+          ]
+        }
+      ];
+      const demoMetrics = computeSessionMetrics(demoExercises, 74.7);
+
+      return {
+        profile: {
+          height: 185,
+          baselineWeight: 74.7,
+          targetWeight: 71.0,
+          targetFat: 13.0,
+          records: {
+            benchPress: '80 кг (зал)',
+            pullupsPrime: '29 повт. (прайм, сейчас строгие)'
+          }
+        },
+        // Базовые цели 1-го подхода (автоматически обновляются Двойной Прогрессией)
+        targets: {
+          pullups: { pronated: 10, wide: 10, supinated: 10, neutral: 10 },
+          pushups: 15,
+          legraises: 10,
+          pike: 8
+        },
+        // Автоматические темп-модификаторы (включаются при высоких повторениях / сушке)
+        tempoCues: {
+          pullups: false,
+          pushups: false,
+          legraises: false,
+          pike: false
+        },
+        // История взвешиваний (предзаполнена точными данными)
+        weighins: [
+          {
+            id: 'wi-seed-1',
+            date: '2026-11-07',
+            weight: 75.8,
+            fat: 17.4,
+            muscle: 59.2,
+            waist: 81.0,
+            chest: 92.0,
+            biceps: 34.0,
+            extras: { water: 59.8, visceral: 5, bmr: 1780, bone: 3.1, protein: 18.8, hr: 64 }
+          },
+          {
+            id: 'wi-seed-2',
+            date: '2026-11-22',
+            weight: 74.7,
+            fat: 16.8,
+            muscle: 58.9,
+            waist: 80.0,
+            chest: 92.0,
+            biceps: 34.0,
+            extras: { water: 60.2, visceral: 4, bmr: 1765, bone: 3.1, protein: 19.0, hr: 62 }
+          }
+        ],
+        // 1 демо-тренировка 2 дня назад
+        workouts: [
+          {
+            id: 'wo-demo-1',
+            isDemo: true,
+            date: twoDaysAgoISO,
+            readiness: 3,
+            bodyweight: 74.7,
+            ...demoMetrics,
+            exercises: demoExercises
+          }
+        ],
+        activeWorkout: null,
+        proteinCheckDate: '',
+        ui: {
+          soundEnabled: true,
+          atlasView: 'both',
+          selectedMuscle: 'lats',
+          cutChartMode: 'weight',
+          progChartMode: 'rsi',
+          expandedWorkoutId: null
+        }
+      };
+    }
+
+    let state = loadState();
+
+    // Переменные таймера отдыха
+    let restTimerId = null;
+    let restTotalSec = 120;
+    let restRemainingMs = 0;
+    let restEndTime = 0;
+    let restPaused = false;
+    let restLastBeep = -1;
+    let audioCtx = null;
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          const def = createDefaultState();
+          def.activeWorkout = buildFreshWorkout(def);
+          return def;
+        }
+        const parsed = JSON.parse(raw);
+        const def = createDefaultState();
+        const merged = {
+          ...def,
+          ...parsed,
+          profile: { ...def.profile, ...(parsed.profile || {}), records: { ...def.profile.records, ...((parsed.profile && parsed.profile.records) || {}) } },
+          targets: { ...def.targets, ...(parsed.targets || {}), pullups: { ...def.targets.pullups, ...((parsed.targets && parsed.targets.pullups) || {}) } },
+          tempoCues: { ...def.tempoCues, ...(parsed.tempoCues || {}) },
+          ui: { ...def.ui, ...(parsed.ui || {}) }
+        };
+        if (!merged.activeWorkout) {
+          merged.activeWorkout = buildFreshWorkout(merged);
+        }
+        return merged;
+      } catch (e) {
+        console.error('Ошибка чтения localStorage:', e);
+        const def = createDefaultState();
+        def.activeWorkout = buildFreshWorkout(def);
+        return def;
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {
+        console.error('Ошибка сохранения localStorage:', e);
+      }
+    }
+
+    /* ==========================================================================
+       ГЕНЕРАЦИЯ PNG APPLE-TOUCH-ICON ЧЕРЕЗ CANVAS (для идеальной иконки iOS)
+       ========================================================================== */
+    function generateAppleTouchIconPNG() {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 180;
+        canvas.height = 180;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        // Фон #09090C
+        ctx.fillStyle = '#09090C';
+        ctx.fillRect(0, 0, 180, 180);
+
+        // Мягкое радиальное свечение
+        const grad = ctx.createRadialGradient(90, 42, 8, 90, 90, 110);
+        grad.addColorStop(0, 'rgba(200, 255, 0, 0.20)');
+        grad.addColorStop(0.55, 'rgba(0, 229, 255, 0.06)');
+        grad.addColorStop(1, 'rgba(9, 9, 12, 0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 180, 180);
+
+        // Внутренняя рамка
+        ctx.strokeStyle = 'rgba(200, 255, 0, 0.32)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.roundRect ? ctx.roundRect(10, 10, 160, 160, 32) : ctx.rect(10, 10, 160, 160);
+        ctx.stroke();
+
+        // Геометрический символ V (VECTRA)
+        ctx.fillStyle = '#C8FF00';
+        ctx.beginPath();
+        ctx.moveTo(42, 48);
+        ctx.lineTo(90, 138);
+        ctx.lineTo(138, 48);
+        ctx.lineTo(114, 48);
+        ctx.lineTo(90, 96);
+        ctx.lineTo(66, 48);
+        ctx.closePath();
+        ctx.fill();
+
+        // Голубая вершина-акцент
+        ctx.fillStyle = '#00E5FF';
+        ctx.beginPath();
+        ctx.arc(90, 46, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        const pngUrl = canvas.toDataURL('image/png');
+        const link = document.getElementById('apple-touch-icon-link');
+        if (link && pngUrl.startsWith('data:image/png')) {
+          link.href = pngUrl;
+        }
+      } catch (e) {
+        // Оставляем SVG-иконку по умолчанию
+      }
+    }
+
+    /* ==========================================================================
+       НАУЧНЫЕ АЛГОРИТМЫ АВТОПИЛОТА
+       1) Компенсация сушки (Cut Compensation)
+       2) Умная ротация хватов
+       3) Внутрисессионная RIR-авторегуляция
+       4) Межсессионная двойная прогрессия
+       ========================================================================== */
+    function getSortedWeighins(st = state) {
+      return [...st.weighins].sort((a, b) => a.date.localeCompare(b.date));
+    }
+
+    function getLatestWeighin(st = state) {
+      const sorted = getSortedWeighins(st);
+      return sorted[sorted.length - 1] || { weight: 74.7, fat: 16.8, muscle: 58.9, waist: 80, chest: 92, biceps: 34 };
+    }
+
+    // 1. Компенсация потери механического натяжения при снижении веса тела
+    function getCutCompensation(exId = null, st = state) {
+      const baselineW = st.profile.baselineWeight || 74.7;
+      const currentW = getLatestWeighin(st).weight;
+      const weightDrop = Number((baselineW - currentW).toFixed(2)); // > 0 когда похудел
+      const active = weightDrop >= 1.2;
+
+      if (!active) {
+        return {
+          active: false,
+          weightDrop,
+          currentW,
+          baselineW,
+          bonusReps: 0,
+          tempoCue: exId ? Boolean(st.tempoCues[exId]) : false,
+          pillText: ''
+        };
+      }
+
+      const rawBonus = weightDrop >= 2.7 ? 2 : 1;
+      const highRepThresholds = { pullups: 14, pushups: 20, legraises: 14, pike: 12 };
+      const baseRef = exId
+        ? (exId === 'pullups' ? st.targets.pullups[st.activeWorkout ? st.activeWorkout.pullupsGrip : 'pronated'] : st.targets[exId])
+        : 12;
+
+      const useTempo = Boolean((exId && st.tempoCues[exId]) || (exId && baseRef + rawBonus >= highRepThresholds[exId]));
+      const bonusReps = useTempo && rawBonus > 1 ? 1 : (useTempo && baseRef >= (highRepThresholds[exId] || 20) ? 0 : rawBonus);
+
+      let pillText = `Вес −${weightDrop.toFixed(1)} кг → компенсация +${bonusReps} повт. для сохранения мышц`;
+      if (useTempo && bonusReps > 0) {
+        pillText = `Вес −${weightDrop.toFixed(1)} кг → +${bonusReps} повт. + темп 3-0-1 (негатив 3с)`;
+      } else if (useTempo && bonusReps === 0) {
+        pillText = `Вес −${weightDrop.toFixed(1)} кг → Темп 3-0-1 (контроль негатива 3с)`;
+      }
+
+      return {
+        active: true,
+        weightDrop,
+        currentW,
+        baselineW,
+        bonusReps,
+        tempoCue: useTempo,
+        pillText
+      };
+    }
+
+    // 2. Автопилот ротации хватов подтягиваний (никогда не повторяет прошлый, учитывает восстановление)
+    function getAutopilotGrip(st = state) {
+      const sortedWorkouts = [...st.workouts].sort((a, b) => new Date(b.date) - new Date(a.date));
+      const lastPullupSession = sortedWorkouts.find(w => w.exercises.some(e => e.id === 'pullups' && e.grip));
+      if (!lastPullupSession) {
+        return {
+          grip: 'pronated',
+          lastGrip: null,
+          reason: PULLUP_GRIPS.pronated.autoReason
+        };
+      }
+      const lastGrip = lastPullupSession.exercises.find(e => e.id === 'pullups').grip;
+      const idx = GRIP_ROTATION.indexOf(lastGrip);
+      const nextGrip = GRIP_ROTATION[(idx + 1) % GRIP_ROTATION.length];
+      return {
+        grip: nextGrip,
+        lastGrip,
+        reason: PULLUP_GRIPS[nextGrip].autoReason
+      };
+    }
+
+    // Генерация подходов с учётом готовности, компенсации сушки и кривой утомления упражнения
+    function generateSets(exId, baseSet1, setsCount, readiness, st = state) {
+      const rMult = (READINESS_MAP[readiness] || READINESS_MAP[3]).mult;
+      const comp = getCutCompensation(exId, st);
+      const drop = EXERCISES[exId].fatigueDrop;
+
+      const set1Target = Math.max(3, Math.round(baseSet1 * rMult) + comp.bonusReps);
+      const sets = [];
+
+      for (let i = 0; i < setsCount; i++) {
+        let tgt = set1Target;
+        if (i === 1) tgt = Math.max(3, Math.round(set1Target * (1 - drop)));
+        if (i === 2) tgt = Math.max(3, Math.round(set1Target * (1 - drop * 1.85)));
+        sets.push({
+          target: tgt,
+          reps: tgt,
+          rir: 2,
+          done: false,
+          cue: '',
+          cueTone: ''
+        });
+      }
+      return sets;
+    }
+
+    function buildFreshWorkout(st = state) {
+      const autoGrip = getAutopilotGrip(st);
+      const readiness = 3;
+      return {
+        readiness,
+        pullupsGrip: autoGrip.grip,
+        autoGripId: autoGrip.grip,
+        pikeMode: 'lite', // Анти-лень по умолчанию: Лайт 2×6
+        exercises: {
+          pullups: generateSets('pullups', st.targets.pullups[autoGrip.grip], 3, readiness, st),
+          pushups: generateSets('pushups', st.targets.pushups, 3, readiness, st),
+          legraises: generateSets('legraises', st.targets.legraises, 3, readiness, st),
+          pike: generateSets('pike', 6, 2, readiness, st)
+        }
+      };
+    }
+
+    // Синхронизировать невыполненные подходы при изменении веса тела (компенсация сушки)
+    function refreshUncompletedTargets() {
+      const aw = state.activeWorkout;
+      if (!aw) return;
+      ['pullups', 'pushups', 'legraises', 'pike'].forEach(exId => {
+        if (exId === 'pike' && aw.pikeMode === 'skip') return;
+        const base = exId === 'pullups'
+          ? state.targets.pullups[aw.pullupsGrip]
+          : (exId === 'pike' && aw.pikeMode === 'lite' ? 6 : state.targets[exId]);
+        const fresh = generateSets(exId, base, aw.exercises[exId].length, aw.readiness, state);
+        aw.exercises[exId].forEach((s, idx) => {
+          if (!s.done && (idx === 0 || !aw.exercises[exId][idx - 1].done)) {
+            s.target = fresh[idx].target;
+            s.reps = fresh[idx].target;
+          }
+        });
+      });
+    }
+
+    // 3. Внутрисессионная RIR-авторегуляция следующего подхода
+    function calculateNextSetByRIR(exId, performedReps, rir, setIdx) {
+      const drop = EXERCISES[exId].fatigueDrop;
+      if (rir === 0) {
+        // Отказ — повышенная усталость ЦНС (+4% к падению), +30с отдыха
+        const next = Math.max(3, Math.round(performedReps * (1 - (drop + 0.05))));
+        return {
+          nextTarget: next,
+          tone: 'warn',
+          cue: `RIR 0 (отказ): снизили цель до ${next} повт. и добавили +30с отдыха для ЦНС.`
+        };
+      }
+      if (rir === 1) {
+        const next = Math.max(3, Math.round(performedReps * (1 - drop)));
+        return {
+          nextTarget: next,
+          tone: 'amber',
+          cue: `RIR 1 (запас 1): мощный стимул. С учётом утомления цель на ${setIdx + 2}-й подход: ${next} повт.`
+        };
+      }
+      if (rir === 2) {
+        const next = Math.max(3, Math.round(performedReps * (1 - drop * 0.72)));
+        return {
+          nextTarget: next,
+          tone: 'opt',
+          cue: `RIR 2 (идеал): оптимум стимул/усталость. Цель на ${setIdx + 2}-й подход: ${next} повт.`
+        };
+      }
+      // RIR 3+ (слишком легко — не добрались до эффективных повторений)
+      const boost = exId === 'legraises' ? 1 : 2;
+      const next = performedReps + boost;
+      return {
+        nextTarget: next,
+        tone: '',
+        cue: `RIR 3+ (легко): добавили +${boost} повт. (цель ${next}), чтобы попасть в зону роста мышц.`
+      };
+    }
+
+    function getFinalSetCue(sets) {
+      const done = sets.filter(s => s.done);
+      const avgRir = done.reduce((a, s) => a + s.rir, 0) / Math.max(1, done.length);
+      const totalDone = done.reduce((a, s) => a + s.reps, 0);
+      const totalTgt = done.reduce((a, s) => a + s.target, 0);
+
+      if (avgRir >= 2.0 && totalDone >= totalTgt) {
+        return {
+          tone: 'opt',
+          cue: 'Финальный подход закрыт с запасом (ср. RIR ≥ 2.0) → Двойная прогрессия поднимет базу на следующий раз!'
+        };
+      }
+      if (avgRir <= 0.5 && totalDone < totalTgt) {
+        return {
+          tone: 'warn',
+          cue: 'Высокое утомление на сушке (RIR ≤ 0.5) → автопилот смягчит базу на следующий раз для защиты восстановления.'
+        };
+      }
+      return {
+        tone: '',
+        cue: 'Рабочий объём закреплён. Автопилот сохранит текущую базу до уверенного RIR 2+.'
+      };
+    }
+
+    /* ==========================================================================
+       ЗВУК И ПЛАВАЮЩИЙ ТАЙМЕР ОТДЫХА (Web Audio API)
+       ========================================================================== */
+    function initAudio() {
+      try {
+        if (!audioCtx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (AC) audioCtx = new AC();
+        }
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+      } catch (e) {}
+    }
+
+    function playTone(freq, dur, vol = 0.14, type = 'sine', delay = 0) {
+      if (!state.ui.soundEnabled) return;
+      try {
+        initAudio();
+        if (!audioCtx) return;
+        const t = audioCtx.currentTime + delay;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, t);
+        gain.gain.setValueAtTime(0.0001, t);
+        gain.gain.exponentialRampToValueAtTime(vol, t + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(t);
+        osc.stop(t + dur + 0.02);
+      } catch (e) {}
+    }
+
+    function startRestTimer(seconds, label) {
+      initAudio();
+      restTotalSec = seconds;
+      restRemainingMs = seconds * 1000;
+      restEndTime = Date.now() + restRemainingMs;
+      restPaused = false;
+      restLastBeep = -1;
+
+      document.getElementById('rest-label').textContent = label;
+      document.getElementById('rest-pause-btn').textContent = '⏸';
+      document.getElementById('rest-countdown').classList.remove('paused');
+      document.getElementById('rest-bar').classList.add('visible');
+
+      updateRestUI();
+      if (restTimerId) clearInterval(restTimerId);
+      restTimerId = setInterval(tickRestTimer, 250);
+    }
+
+    function tickRestTimer() {
+      if (restPaused) return;
+      restRemainingMs = Math.max(0, restEndTime - Date.now());
+      updateRestUI();
+
+      const remSec = Math.ceil(restRemainingMs / 1000);
+      if (remSec <= 3 && remSec >= 1 && remSec !== restLastBeep) {
+        restLastBeep = remSec;
+        playTone(540, 0.08, 0.1, 'sine');
+      }
+
+      if (restRemainingMs <= 0) {
+        stopRestTimer(false);
+        playTone(660, 0.14, 0.16, 'triangle', 0);
+        playTone(880, 0.25, 0.18, 'triangle', 0.15);
+        if (navigator.vibrate) navigator.vibrate([100, 60, 120]);
+        showToast('Отдых завершён — можно заходить в следующий подход!', 'lime');
+      }
+    }
+
+    function updateRestUI() {
+      const remSec = Math.max(0, Math.ceil(restRemainingMs / 1000));
+      const m = String(Math.floor(remSec / 60)).padStart(2, '0');
+      const s = String(remSec % 60).padStart(2, '0');
+      document.getElementById('rest-countdown').textContent = `${m}:${s}`;
+      const pct = Math.max(0, Math.min(100, (restRemainingMs / (restTotalSec * 1000)) * 100));
+      document.getElementById('rest-fill').style.width = `${pct}%`;
+    }
+
+    function toggleRestPause() {
+      restPaused = !restPaused;
+      if (!restPaused) {
+        restEndTime = Date.now() + restRemainingMs;
+      }
+      document.getElementById('rest-pause-btn').textContent = restPaused ? '▶' : '⏸';
+      document.getElementById('rest-countdown').classList.toggle('paused', restPaused);
+    }
+
+    function adjustRest(deltaSec) {
+      restTotalSec = Math.max(15, restTotalSec + deltaSec);
+      restRemainingMs = Math.max(0, restRemainingMs + deltaSec * 1000);
+      if (!restPaused) restEndTime = Date.now() + restRemainingMs;
+      updateRestUI();
+    }
+
+    function stopRestTimer(silent = true) {
+      if (restTimerId) {
+        clearInterval(restTimerId);
+        restTimerId = null;
+      }
+      restPaused = false;
+      document.getElementById('rest-bar').classList.remove('visible');
+      if (!silent) playTone(440, 0.06, 0.06);
+    }
+
+    function toggleSound() {
+      state.ui.soundEnabled = !state.ui.soundEnabled;
+      saveState();
+      updateSoundButtons();
+      showToast(state.ui.soundEnabled ? 'Звук таймера включён' : 'Звук таймера выключен', 'cyan');
+    }
+
+    function updateSoundButtons() {
+      const btn = document.getElementById('settings-sound-btn');
+      if (btn) btn.textContent = state.ui.soundEnabled ? '🔊 Звук вкл.' : '🔇 Звук выкл.';
+    }
+
+    /* ==========================================================================
+       НАВИГАЦИЯ И UI-ХЕЛПЕРЫ
+       ========================================================================== */
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      const v = document.getElementById(`tab-${tabId}`);
+      const n = document.querySelector(`.nav-item[data-tab="${tabId}"]`);
+      if (v) v.classList.add('active');
+      if (n) n.classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      if (tabId === 'workout') renderWorkoutTab();
+      if (tabId === 'atlas') renderAtlasTab();
+      if (tabId === 'cut') renderCutTab();
+      if (tabId === 'progress') renderProgressTab();
+    }
+
+    let toastTimer = null;
+    function showToast(msg, tone = 'lime') {
+      const el = document.getElementById('toast');
+      const dot = document.getElementById('toast-dot');
+      document.getElementById('toast-text').textContent = msg;
+      const map = { lime: '#C8FF00', cyan: '#00E5FF', amber: '#FFB800', coral: '#FF4D6D' };
+      const c = map[tone] || map.lime;
+      dot.style.background = c;
+      dot.style.boxShadow = `0 0 8px ${c}`;
+      el.style.borderColor = c;
+      el.classList.add('show');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 2900);
+    }
+
+    function openModal(html) {
+      document.getElementById('modal-content').innerHTML = html;
+      document.getElementById('modal-backdrop').classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('modal-backdrop').classList.remove('open');
+    }
+
+    function toggleAccordion(id, btn) {
+      const body = document.getElementById(id);
+      const isOpen = body.classList.toggle('open');
+      const arrow = btn.querySelector('.acc-arrow');
+      if (arrow) arrow.textContent = isOpen ? '▴' : '▾';
+    }
+
+    function formatDateRu(isoStr) {
+      const d = new Date(isoStr.length === 10 ? isoStr + 'T12:00:00' : isoStr);
+      return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+    }
+
+    function updateTopbar() {
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'long' });
+      document.getElementById('topbar-date').textContent = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+      const curW = getLatestWeighin().weight;
+      document.getElementById('topbar-weight-pill').textContent = `${curW.toFixed(1)} → ${state.profile.targetWeight.toFixed(1)} кг`;
+      updateSoundButtons();
+    }
+
+    /* ==========================================================================
+       ВКЛАДКА 1: «ТРЕНИРОВКА»
+       ========================================================================== */
+    function setReadiness(level) {
+      state.activeWorkout.readiness = level;
+      refreshUncompletedTargets();
+      saveState();
+      renderWorkoutTab();
+    }
+
+    function selectPullupGrip(gripId) {
+      const aw = state.activeWorkout;
+      aw.pullupsGrip = gripId;
+      const fresh = generateSets('pullups', state.targets.pullups[gripId], 3, aw.readiness, state);
+      aw.exercises.pullups.forEach((s, idx) => {
+        if (!s.done) {
+          s.target = fresh[idx].target;
+          s.reps = fresh[idx].target;
+        }
+      });
+      saveState();
+      renderWorkoutTab();
+      renderAtlasTab();
+    }
+
+    function setPikeMode(mode) {
+      const aw = state.activeWorkout;
+      aw.pikeMode = mode;
+      if (mode === 'lite') {
+        aw.exercises.pike = generateSets('pike', 6, 2, aw.readiness, state);
+      } else if (mode === 'base') {
+        aw.exercises.pike = generateSets('pike', state.targets.pike, 3, aw.readiness, state);
+      } else {
+        aw.exercises.pike = [];
+      }
+      saveState();
+      renderWorkoutTab();
+      renderAtlasTab();
+    }
+
+    function changeReps(exId, idx, delta) {
+      const s = state.activeWorkout.exercises[exId][idx];
+      s.reps = Math.max(1, Math.min(100, (parseInt(s.reps, 10) || 1) + delta));
+      saveState();
+      renderWorkoutTab();
+    }
+
+    function directRepsInput(exId, idx, val) {
+      const num = parseInt(val, 10);
+      if (!isNaN(num) && num >= 1) {
+        state.activeWorkout.exercises[exId][idx].reps = Math.min(100, num);
+        saveState();
+      }
+    }
+
+    function selectRir(exId, idx, rirVal) {
+      const s = state.activeWorkout.exercises[exId][idx];
+      s.rir = rirVal;
+      if (s.done) applyRirLogic(exId, idx, false);
+      saveState();
+      renderWorkoutTab();
+    }
+
+    function toggleSetDone(exId, idx) {
+      const s = state.activeWorkout.exercises[exId][idx];
+      s.done = !s.done;
+      if (s.done) {
+        applyRirLogic(exId, idx, true);
+        playTone(680, 0.08, 0.1, 'sine');
+      } else {
+        s.cue = '';
+      }
+      saveState();
+      renderWorkoutTab();
+      renderAtlasTab();
+    }
+
+    function applyRirLogic(exId, idx, startTimer) {
+      const sets = state.activeWorkout.exercises[exId];
+      const s = sets[idx];
+      const meta = EXERCISES[exId];
+
+      if (idx < sets.length - 1) {
+        const res = calculateNextSetByRIR(exId, s.reps, s.rir, idx);
+        s.cue = res.cue;
+        s.cueTone = res.tone;
+        const nextSet = sets[idx + 1];
+        if (!nextSet.done) {
+          nextSet.target = res.nextTarget;
+          nextSet.reps = res.nextTarget;
+        }
+      } else {
+        const fin = getFinalSetCue(sets);
+        s.cue = fin.cue;
+        s.cueTone = fin.tone;
+      }
+
+      if (startTimer) {
+        const extra = s.rir === 0 ? 30 : 0;
+        const sec = meta.defaultRest + extra;
+        startRestTimer(sec, `Отдых · ${meta.name}${extra ? ' (+30с ЦНС)' : ''}`);
+      }
+    }
+
+    function renderWorkoutTab() {
+      const aw = state.activeWorkout;
+      const rCfg = READINESS_MAP[aw.readiness];
+      const autoGrip = getAutopilotGrip();
+      const globalComp = getCutCompensation(null);
+      const estMins = aw.pikeMode === 'skip' ? '~22–25 мин' : (aw.pikeMode === 'lite' ? '~26–28 мин' : '~30–32 мин');
+
+      // 1. Главная карточка Автопилота
+      document.getElementById('autopilot-hero-card').innerHTML = `
+        <div class="flex-between">
+          <div>
+            <span class="badge badge-lime">⚡ Автопилот активен</span>
+            <div class="card-title" style="margin-top:6px;">План на сегодня</div>
+          </div>
+          <span class="badge badge-muted">${estMins}</span>
+        </div>
+
+        <div class="autopilot-meta-grid">
+          <div class="ap-pill">
+            <div class="ap-pill-lbl">Хват дня</div>
+            <div class="ap-pill-val text-lime">${PULLUP_GRIPS[aw.pullupsGrip].short}</div>
+          </div>
+          <div class="ap-pill">
+            <div class="ap-pill-lbl">Вес тела</div>
+            <div class="ap-pill-val text-cyan">${globalComp.currentW.toFixed(1)} кг</div>
+          </div>
+          <div class="ap-pill">
+            <div class="ap-pill-lbl">Режим</div>
+            <div class="ap-pill-val">${rCfg.tag}</div>
+          </div>
+        </div>
+
+        <div class="comp-banner ${globalComp.active ? 'active-cut' : ''}">
+          <span>
+            ${globalComp.active
+              ? `🛡 <b>Компенсация сушки:</b> вес −${globalComp.weightDrop.toFixed(1)} кг от базы ${globalComp.baselineW} кг → автодобавка нагрузки для защиты мышц.`
+              : `⚖️ <b>Компенсация сушки:</b> вес ${globalComp.currentW.toFixed(1)} кг (база ${globalComp.baselineW} кг). При снижении ≥ 1.2 кг автопилот сам добавит +1 повт. или темп 3-0-1.`
+            }
+          </span>
+        </div>
+
+        <div class="flex-between" style="margin-top:4px;">
+          <span style="font-size:12px; font-weight:700; color:var(--text-2);">Как самочувствие перед стартом?</span>
+          <span style="font-size:11.5px; font-weight:800; color:var(--lime);">${aw.readiness}/5 · ${rCfg.label}</span>
+        </div>
+        <div class="readiness-grid">
+          ${[1, 2, 3, 4, 5].map(n => `
+            <button type="button" class="readiness-btn ${aw.readiness === n ? 'active' : ''}" onclick="setReadiness(${n})">
+              <span class="r-num">${n}</span>
+              <span class="r-lbl">${READINESS_MAP[n].label}</span>
+            </button>
+          `).join('')}
+        </div>
+        <div class="readiness-note">${rCfg.note}</div>
+      `;
+
+      // 2. Карточки 4 упражнений
+      const order = ['pullups', 'pushups', 'legraises', 'pike'];
+      const container = document.getElementById('exercises-container');
+
+      container.innerHTML = order.map(exId => {
+        const meta = EXERCISES[exId];
+        const sets = aw.exercises[exId] || [];
+        const doneCount = sets.filter(s => s.done).length;
+        const isPullup = exId === 'pullups';
+        const isPike = exId === 'pike';
+        const comp = getCutCompensation(exId);
+
+        let topExtraHtml = '';
+
+        // Индикатор компенсации сушки или темпа на карточке упражнения
+        if (comp.active && !(isPike && aw.pikeMode === 'skip')) {
+          topExtraHtml += `<div class="ex-comp-pill">⚡ ${comp.pillText}</div>`;
+        } else if (state.tempoCues[exId] && !(isPike && aw.pikeMode === 'skip')) {
+          topExtraHtml += `<div class="ex-comp-pill">⏱ Темп 3-0-1 (контроль негатива 3с)</div>`;
+        }
+
+        // Автопилот хватов подтягиваний
+        if (isPullup) {
+          const isAutoMatch = aw.pullupsGrip === autoGrip.grip;
+          topExtraHtml += `
+            <div class="autopilot-grip-box">
+              <div>
+                <div style="font-size:10.5px; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; color:var(--lime); margin-bottom:2px;">
+                  ${isAutoMatch ? '✦ Автопилот выбрал сегодня' : '✦ Рекомендация автопилота: ' + PULLUP_GRIPS[autoGrip.grip].short}
+                </div>
+                <div>${isAutoMatch ? autoGrip.reason : PULLUP_GRIPS[aw.pullupsGrip].autoReason}</div>
+              </div>
+              ${!isAutoMatch ? `<button type="button" class="badge badge-lime" style="min-height:36px;" onclick="selectPullupGrip('${autoGrip.grip}')">Выбрать</button>` : ''}
+            </div>
+            <div class="seg-control seg-4">
+              ${GRIP_ROTATION.map(gId => `
+                <button type="button" class="seg-btn ${aw.pullupsGrip === gId ? 'active-lime' : ''}" onclick="selectPullupGrip('${gId}')">
+                  <span>${PULLUP_GRIPS[gId].short}</span>
+                  ${gId === autoGrip.grip ? `<small style="font-size:9px; opacity:0.85;">авто</small>` : ''}
+                </button>
+              `).join('')}
+            </div>
+          `;
+        }
+
+        // Режим «Анти-лень» для отжиманий домиком
+        if (isPike) {
+          topExtraHtml += `
+            <div class="seg-control seg-3">
+              <button type="button" class="seg-btn ${aw.pikeMode === 'skip' ? 'active' : ''}" onclick="setPikeMode('skip')">Пропустить</button>
+              <button type="button" class="seg-btn ${aw.pikeMode === 'lite' ? 'active-lime' : ''}" onclick="setPikeMode('lite')">Лайт: 2×6</button>
+              <button type="button" class="seg-btn ${aw.pikeMode === 'base' ? 'active-lime' : ''}" onclick="setPikeMode('base')">База: 3×${state.targets.pike}</button>
+            </div>
+            ${aw.pikeMode === 'skip'
+              ? `<div class="science-note amber" style="margin-top:0;">Без давления: сегодня пропускаем. Дельты в Атласе отмечены пунктиром — вернись к «Лайт 2×6», когда будет настрой.</div>`
+              : aw.pikeMode === 'lite'
+                ? `<div class="science-note opt" style="margin-top:0; margin-bottom:10px;">Анти-лень: всего 2 коротких подхода по 6 повт. — плечи получат стимул без моральной тяжести.</div>`
+                : ''
+            }
+          `;
+        }
+
+        const firstOpenIdx = sets.findIndex(s => !s.done);
+        const setsHtml = sets.length ? `
+          <div class="sets-list">
+            ${sets.map((s, idx) => `
+              <div class="set-box ${s.done ? 'completed' : (idx === firstOpenIdx ? 'current' : '')}">
+                <div class="set-top">
+                  <div class="set-index">
+                    <span class="set-dot">${s.done ? '✓' : idx + 1}</span>
+                    <span>Подход ${idx + 1}</span>
+                  </div>
+                  <span class="set-target">Цель: ${s.target} повт.</span>
+                </div>
+
+                <div class="set-controls">
+                  <div class="stepper">
+                    <button type="button" class="step-btn" onclick="changeReps('${exId}', ${idx}, -1)" aria-label="Уменьшить">−</button>
+                    <input class="rep-input" type="number" inputmode="numeric" value="${s.reps}" onchange="directRepsInput('${exId}', ${idx}, this.value)">
+                    <button type="button" class="step-btn" onclick="changeReps('${exId}', ${idx}, 1)" aria-label="Увеличить">+</button>
+                  </div>
+                  <button type="button" class="log-set-btn ${s.done ? 'logged' : ''}" onclick="toggleSetDone('${exId}', ${idx})">
+                    ${s.done ? '✓ Готово' : 'Записать'}
+                  </button>
+                </div>
+
+                <div class="rir-row">
+                  <button type="button" class="rir-btn ${s.rir === 0 ? 'active-0' : ''}" onclick="selectRir('${exId}', ${idx}, 0)">0<small>Отказ</small></button>
+                  <button type="button" class="rir-btn ${s.rir === 1 ? 'active-1' : ''}" onclick="selectRir('${exId}', ${idx}, 1)">1<small>Запас 1</small></button>
+                  <button type="button" class="rir-btn ${s.rir === 2 ? 'active-2' : ''}" onclick="selectRir('${exId}', ${idx}, 2)">2<small>Запас 2</small></button>
+                  <button type="button" class="rir-btn ${s.rir === 3 ? 'active-3' : ''}" onclick="selectRir('${exId}', ${idx}, 3)">3+<small>Легко</small></button>
+                </div>
+
+                ${s.done && s.cue ? `<div class="science-note ${s.cueTone || ''}">${s.cue}</div>` : ''}
+              </div>
+            `).join('')}
+          </div>
+        ` : '';
+
+        return `
+          <section class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">${meta.name}</div>
+                <div class="card-subtitle">${meta.note}</div>
+              </div>
+              <span class="badge ${doneCount > 0 && doneCount === sets.length ? 'badge-lime' : 'badge-muted'}">
+                ${isPike && aw.pikeMode === 'skip' ? 'Пропуск' : `${doneCount}/${sets.length}`}
+              </span>
+            </div>
+            ${topExtraHtml}
+            ${setsHtml}
+          </section>
+        `;
+      }).join('');
+
+      // 3. Живая сводка сессии
+      const curW = getLatestWeighin().weight;
+      const liveExList = [];
+      let totalSets = 0;
+      order.forEach(exId => {
+        if (exId === 'pike' && aw.pikeMode === 'skip') return;
+        const doneSets = (aw.exercises[exId] || []).filter(s => s.done);
+        if (doneSets.length) {
+          totalSets += doneSets.length;
+          liveExList.push({ id: exId, sets: doneSets });
+        }
+      });
+      const liveM = computeSessionMetrics(liveExList, curW);
+      document.getElementById('session-live-summary').textContent = `Выполнено ${totalSets} подх. · ${liveM.totalReps} повт. · Тоннаж ${liveM.effectiveTonnage} кг`;
+      document.getElementById('finish-workout-btn').disabled = totalSets === 0;
+    }
+
+    // 4. Завершение тренировки + Межсессионная Двойная Прогрессия + Отчёт Автопилота
+    function finishWorkout() {
+      const aw = state.activeWorkout;
+      const curW = getLatestWeighin().weight;
+      const recordedExercises = [];
+      const adjustments = [];
+
+      ['pullups', 'pushups', 'legraises', 'pike'].forEach(exId => {
+        if (exId === 'pike' && aw.pikeMode === 'skip') return;
+        const doneSets = (aw.exercises[exId] || []).filter(s => s.done);
+        if (!doneSets.length) return;
+
+        const entry = {
+          id: exId,
+          sets: doneSets.map(s => ({ target: s.target, reps: parseInt(s.reps, 10) || 0, rir: s.rir }))
+        };
+        if (exId === 'pullups') entry.grip = aw.pullupsGrip;
+        if (exId === 'pike') entry.mode = aw.pikeMode;
+        recordedExercises.push(entry);
+
+        // Межсессионная двойная прогрессия
+        const avgRir = doneSets.reduce((a, s) => a + s.rir, 0) / doneSets.length;
+        const sumReps = doneSets.reduce((a, s) => a + s.reps, 0);
+        const sumTarget = doneSets.reduce((a, s) => a + s.target, 0);
+        const fullSessionDone = doneSets.length === aw.exercises[exId].length;
+
+        const exLabel = exId === 'pullups'
+          ? `Подтягивания (${PULLUP_GRIPS[aw.pullupsGrip].short})`
+          : EXERCISES[exId].name;
+
+        if (fullSessionDone && avgRir >= 2.0 && sumReps >= sumTarget) {
+          if (exId === 'pullups') {
+            state.targets.pullups[aw.pullupsGrip] += 1;
+            adjustments.push({ tone: 'opt', text: `▲ ${exLabel}: уверенный RIR ${avgRir.toFixed(1)} → база повышена до ${state.targets.pullups[aw.pullupsGrip]} повт.` });
+          } else if (exId === 'pushups') {
+            if (state.targets.pushups >= 22) {
+              state.tempoCues.pushups = true;
+              adjustments.push({ tone: 'opt', text: `⏱ ${exLabel}: высокий запас (${state.targets.pushups}+ повт.) → включён темп 3-0-1.` });
+            } else {
+              state.targets.pushups += 1;
+              adjustments.push({ tone: 'opt', text: `▲ ${exLabel}: уверенный RIR ${avgRir.toFixed(1)} → база повышена до ${state.targets.pushups} повт.` });
+            }
+          } else if (exId === 'pike' && aw.pikeMode === 'lite') {
+            adjustments.push({ tone: 'opt', text: `★ ${exLabel} (Лайт 2×6) закрыты чисто! В следующий раз можно пробовать Базу 3×${state.targets.pike}.` });
+          } else {
+            state.targets[exId] += 1;
+            adjustments.push({ tone: 'opt', text: `▲ ${exLabel}: уверенный RIR ${avgRir.toFixed(1)} → база повышена до ${state.targets[exId]} повт.` });
+          }
+        } else if (avgRir <= 0.5 && sumReps < sumTarget) {
+          if (exId === 'pullups') {
+            state.targets.pullups[aw.pullupsGrip] = Math.max(5, state.targets.pullups[aw.pullupsGrip] - 1);
+            adjustments.push({ tone: 'warn', text: `▼ ${exLabel}: высокий стресс (RIR ${avgRir.toFixed(1)}) → база смягчена до ${state.targets.pullups[aw.pullupsGrip]} повт. для защиты от перетрена.` });
+          } else if (exId !== 'pike' || aw.pikeMode !== 'lite') {
+            state.targets[exId] = Math.max(5, state.targets[exId] - 1);
+            adjustments.push({ tone: 'warn', text: `▼ ${exLabel}: высокий стресс (RIR ${avgRir.toFixed(1)}) → база смягчена до ${state.targets[exId]} повт.` });
+          }
+        } else {
+          adjustments.push({ tone: '', text: `● ${exLabel}: база закреплена (ср. RIR ${avgRir.toFixed(1)}). Продолжаем консолидацию.` });
+        }
+      });
+
+      if (!recordedExercises.length) {
+        showToast('Сначала запиши хотя бы один подход', 'coral');
+        return;
+      }
+
+      const prevSession = state.workouts[0] || null;
+      const metrics = computeSessionMetrics(recordedExercises, curW);
+      const session = {
+        id: 'wo-' + Date.now(),
+        isDemo: false,
+        date: new Date().toISOString(),
+        readiness: aw.readiness,
+        bodyweight: curW,
+        ...metrics,
+        exercises: recordedExercises
+      };
+
+      state.workouts.unshift(session);
+      state.activeWorkout = buildFreshWorkout(state);
+      stopRestTimer(true);
+      saveState();
+      renderAll();
+
+      const nextGrip = getAutopilotGrip();
+      const rsiDelta = prevSession ? Number((metrics.rsi - (prevSession.rsi || 0)).toFixed(1)) : 0;
+      const rsiTrendText = prevSession
+        ? (rsiDelta > 0 ? `+${rsiDelta} к прошлой (сила растёт!)` : rsiDelta < 0 ? `${rsiDelta} к прошлой` : 'стабильно')
+        : 'базовая точка';
+
+      openModal(`
+        <div class="flex-between">
+          <div>
+            <span class="badge badge-lime">Отчёт Автопилота</span>
+            <h2 style="font-size: 20px; font-weight: 800; margin-top: 7px;">Тренировка завершена!</h2>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size: 24px; font-weight: 800; color: var(--lime);">${metrics.effectiveTonnage} <small style="font-size:12px;">кг</small></div>
+            <div style="font-size: 11px; color: var(--text-2);">эфф. тоннаж</div>
+          </div>
+        </div>
+
+        <div class="inspector-grid">
+          <div class="mini-stat">
+            <div class="mini-stat-label">Всего повторений</div>
+            <div class="mini-stat-val text-cyan">${metrics.totalReps}</div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-stat-label">Индекс силы (RSI)</div>
+            <div class="mini-stat-val text-lime">${metrics.rsi}</div>
+            <div style="font-size:10.5px; color:var(--text-2); margin-top:2px;">${rsiTrendText}</div>
+          </div>
+        </div>
+
+        <div style="font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-3); margin: 10px 0 6px;">
+          Корректировки на следующую тренировку:
+        </div>
+        <div style="display:flex; flex-direction:column; gap:7px;">
+          ${adjustments.map(a => `<div class="science-note ${a.tone}" style="margin-top:0;">${a.text}</div>`).join('')}
+          <div class="science-note" style="margin-top:0;">
+            <b>Следующий хват дня:</b> ${PULLUP_GRIPS[nextGrip.grip].name} — ${nextGrip.reason}.
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="closeModal(); switchTab('atlas');">Открыть Атлас</button>
+          <button class="btn-primary" onclick="closeModal();">Отлично</button>
+        </div>
+      `);
+    }
+
+    /* ==========================================================================
+       ВКЛАДКА 2: «АТЛАС» (Дробный недельный объём 6–12 подх. и MPS 36–48ч)
+       ========================================================================== */
+    function setAtlasView(view) {
+      state.ui.atlasView = view;
+      saveState();
+      renderAtlasTab();
+    }
+
+    function selectMuscle(mId) {
+      state.ui.selectedMuscle = mId;
+      saveState();
+      renderAtlasTab();
+    }
+
+    function computeMuscleStats() {
+      const stats = {};
+      Object.keys(MUSCLES_META).forEach(m => {
+        stats[m] = { todaySets: 0, weekSets: 0, lastTs: null, lastRirMult: 1.0, previewWeight: 0 };
+      });
+
+      const now = Date.now();
+      const weekMs = 7 * 24 * 3600 * 1000;
+
+      // 1. История за последние 7 дней
+      state.workouts.forEach(w => {
+        const ts = new Date(w.date).getTime();
+        if (now - ts > weekMs) return;
+        w.exercises.forEach(ex => {
+          const map = ex.id === 'pullups'
+            ? (PULLUP_GRIPS[ex.grip || 'pronated']?.muscles || {})
+            : (EXERCISES[ex.id]?.muscles || {});
+          const cnt = ex.sets.length;
+          const avgRir = ex.sets.reduce((a, s) => a + (s.rir ?? 2), 0) / Math.max(1, cnt);
+          const rirMult = avgRir <= 0.5 ? 1.15 : avgRir <= 1.5 ? 1.0 : 0.9;
+
+          Object.entries(map).forEach(([mId, wFactor]) => {
+            if (!stats[mId]) return;
+            stats[mId].weekSets += cnt * wFactor;
+            if (!stats[mId].lastTs || ts > stats[mId].lastTs) {
+              stats[mId].lastTs = ts;
+              stats[mId].lastRirMult = rirMult;
+            }
+          });
+        });
+      });
+
+      // 2. Текущая тренировка (live) + превью выбранного хвата
+      const aw = state.activeWorkout;
+      if (aw) {
+        const gripMap = PULLUP_GRIPS[aw.pullupsGrip]?.muscles || {};
+        Object.entries(gripMap).forEach(([mId, wFactor]) => {
+          if (stats[mId]) stats[mId].previewWeight = wFactor;
+        });
+
+        ['pullups', 'pushups', 'legraises', 'pike'].forEach(exId => {
+          const done = (aw.exercises[exId] || []).filter(s => s.done);
+          if (!done.length) return;
+          const map = exId === 'pullups' ? gripMap : (EXERCISES[exId]?.muscles || {});
+          Object.entries(map).forEach(([mId, wFactor]) => {
+            if (!stats[mId]) return;
+            stats[mId].todaySets += done.length * wFactor;
+            stats[mId].weekSets += done.length * wFactor;
+            stats[mId].lastTs = now;
+            stats[mId].lastRirMult = 1.05;
+          });
+        });
+      }
+
+      // 3. Расчёт % восстановления (36–48ч кривая синтеза мышечного белка MPS)
+      Object.keys(stats).forEach(mId => {
+        const meta = MUSCLES_META[mId];
+        const st = stats[mId];
+        if (meta.outOfFocus) {
+          st.recoveryPct = null;
+          return;
+        }
+        if (!st.lastTs) {
+          st.recoveryPct = 100;
+          return;
+        }
+        const hoursPassed = (now - st.lastTs) / 3600000;
+        const reqHours = meta.mpsHours * st.lastRirMult;
+        st.recoveryPct = Math.max(8, Math.min(100, Math.round((hoursPassed / reqHours) * 100)));
+      });
+
+      return stats;
+    }
+
+    function renderAtlasTab() {
+      const view = state.ui.atlasView || 'both';
+      const stage = document.getElementById('atlas-stage');
+      stage.classList.toggle('single', view !== 'both');
+      document.getElementById('panel-front').style.display = (view === 'both' || view === 'front') ? 'flex' : 'none';
+      document.getElementById('panel-back').style.display = (view === 'both' || view === 'back') ? 'flex' : 'none';
+
+      document.querySelectorAll('#atlas-view-toggle .seg-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.view === view);
+      });
+
+      const activeGrip = state.activeWorkout.pullupsGrip;
+      document.getElementById('atlas-grip-preview').innerHTML = GRIP_ROTATION.map(gId => `
+        <button type="button" class="seg-btn ${activeGrip === gId ? 'active-lime' : ''}" onclick="selectPullupGrip('${gId}')">
+          ${PULLUP_GRIPS[gId].short}
+        </button>
+      `).join('');
+
+      const mStats = computeMuscleStats();
+      const anyToday = Object.values(mStats).some(s => s.todaySets > 0);
+      document.getElementById('atlas-today-badge').textContent = anyToday ? 'Сессия идёт' : `Хват: ${PULLUP_GRIPS[activeGrip].short}`;
+
+      const pikeSkipped = state.activeWorkout.pikeMode === 'skip';
+      document.querySelectorAll('.muscle-group').forEach(g => {
+        const mId = g.dataset.muscle;
+        g.classList.toggle('selected', state.ui.selectedMuscle === mId);
+        g.classList.remove('delt-remind');
+        if (mId === 'legs') return;
+
+        const st = mStats[mId];
+        let fill = '#20212C';
+        let stroke = 'rgba(255,255,255,0.16)';
+        let filter = 'none';
+
+        if (st.todaySets >= 1.8) {
+          fill = '#FF4D6D';
+          stroke = '#FFA3B5';
+          filter = 'url(#glow-coral)';
+        } else if (st.todaySets > 0) {
+          fill = '#C8FF00';
+          stroke = '#E7FF8C';
+          filter = 'url(#glow-lime)';
+        } else if (st.previewWeight >= 0.85) {
+          fill = 'rgba(200, 255, 0, 0.72)';
+          stroke = '#C8FF00';
+          filter = 'url(#glow-lime)';
+        } else if (st.previewWeight >= 0.35) {
+          fill = 'rgba(0, 229, 255, 0.52)';
+          stroke = '#00E5FF';
+          filter = 'url(#glow-cyan)';
+        } else if (st.weekSets >= 2 && st.recoveryPct < 92) {
+          fill = 'rgba(0, 229, 255, 0.25)';
+          stroke = 'rgba(0, 229, 255, 0.65)';
+        }
+
+        if (mId === 'front_delts' && pikeSkipped && st.todaySets === 0) {
+          g.classList.add('delt-remind');
+        }
+
+        g.style.filter = filter;
+        g.querySelectorAll('path, rect').forEach(shape => {
+          shape.setAttribute('fill', fill);
+          shape.setAttribute('stroke', stroke);
+          shape.setAttribute('stroke-width', '1.2');
+        });
+      });
+
+      // Инспектор выбранной мышцы
+      const selId = state.ui.selectedMuscle || 'lats';
+      const meta = MUSCLES_META[selId];
+      const st = mStats[selId];
+      const insp = document.getElementById('muscle-inspector');
+
+      if (meta.outOfFocus) {
+        insp.innerHTML = `
+          <div class="flex-between">
+            <div>
+              <div class="card-title">${meta.name}</div>
+              <div class="card-subtitle">${meta.latin}</div>
+            </div>
+            <span class="badge badge-muted">Вне фокуса</span>
+          </div>
+          <p style="font-size: 12.5px; color: var(--text-2); margin-top: 10px;">${meta.exercises[0]}</p>
+        `;
+        return;
+      }
+
+      const recColor = st.recoveryPct >= 90 ? 'var(--lime)' : st.recoveryPct >= 60 ? 'var(--cyan)' : '#FF8AA0';
+      const volPct = Math.min(100, Math.round((st.weekSets / 12) * 100));
+      let volStatus = 'Ниже зоны (добрать подходы)';
+      let volBadge = 'badge-amber';
+      if (st.weekSets >= 6 && st.weekSets <= 12) {
+        volStatus = 'Оптимум 6–12 подх./нед';
+        volBadge = 'badge-lime';
+      } else if (st.weekSets > 12) {
+        volStatus = 'Высокий объём (>12 подх.)';
+        volBadge = 'badge-coral';
+      } else if (st.weekSets >= 3) {
+        volStatus = 'Зона удержания на сушке';
+        volBadge = 'badge-cyan';
+      }
+
+      insp.innerHTML = `
+        <div class="flex-between">
+          <div>
+            <div class="card-title">${meta.name}</div>
+            <div class="card-subtitle">${meta.latin}</div>
+          </div>
+          <span class="badge ${volBadge}">${volStatus}</span>
+        </div>
+
+        <div class="inspector-grid">
+          <div class="mini-stat">
+            <div class="mini-stat-label">Эфф. подходов (7 дн)</div>
+            <div class="mini-stat-val text-cyan">${st.weekSets.toFixed(1)} <small style="font-size:11px; color:var(--text-3);">/ 6–12</small></div>
+            <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${volPct}%; background: var(--cyan);"></div></div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-stat-label">Восстановление (MPS ${meta.mpsHours}ч)</div>
+            <div class="mini-stat-val" style="color:${recColor};">${st.recoveryPct}%</div>
+            <div style="font-size:10.5px; color:var(--text-2); margin-top:3px;">${st.todaySets > 0 ? `+${st.todaySets.toFixed(1)} подх. сегодня` : (st.recoveryPct >= 90 ? 'Готова к работе' : 'Идёт синтез белка')}</div>
+          </div>
+        </div>
+
+        <div style="font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-3); margin-bottom: 6px;">
+          Дробная нагрузка от упражнений:
+        </div>
+        <div style="display:flex; flex-direction:column; gap:5px;">
+          ${meta.exercises.map(t => `<div style="font-size: 12.5px; color: var(--text-2);">• ${t}</div>`).join('')}
+        </div>
+      `;
+    }
+
+    /* ==========================================================================
+       ВКЛАДКА 3: «СУШКА» (74.7 → 71.0 кг, Коридор 0.5–1.0%, Белок, График)
+       ========================================================================== */
+    function setCutChartMode(mode) {
+      state.ui.cutChartMode = mode;
+      saveState();
+      renderCutTab();
+    }
+
+    function toggleProteinToday() {
+      const today = getTodayISO();
+      state.proteinCheckDate = state.proteinCheckDate === today ? '' : today;
+      saveState();
+      renderCutTab();
+      showToast(state.proteinCheckDate === today ? 'Норма белка за сегодня отмечена! 💪' : 'Отметка белка снята', 'lime');
+    }
+
+    function openProteinGuideModal() {
+      const curW = getLatestWeighin().weight;
+      const targetProt = Math.round(curW * 2.0);
+      openModal(`
+        <span class="badge badge-lime">Научный стандарт на сушке</span>
+        <h3 style="font-size:19px; font-weight:800; margin-top:8px;">Цель белка: ~${targetProt} г / день</h3>
+        <p style="font-size:13px; color:var(--text-2); margin-top:8px; line-height:1.5;">
+          На дефиците калорий (74.7 → 71.0 кг) норма <b>1.8–2.2 г белка на кг веса</b> (Хелмс и др.) защищает мышечную ткань от распада и лучше держит сытость.
+        </p>
+        <div style="display:flex; flex-direction:column; gap:8px; margin-top:12px;">
+          <div class="mini-stat"><div class="fw-800" style="font-size:13px;">Ориентиры (примерно по 35–40 г за приём):</div><div style="font-size:12px; color:var(--text-2); margin-top:4px;">• 200 г куриной грудки / индейки ≈ 44 г белка<br>• 200 г творога 2–5% ≈ 34 г белка<br>• 1 скуп протеина ≈ 24 г белка<br>• 3 яйца + 2 белка ≈ 27 г белка</div></div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="closeModal()">Закрыть</button>
+          <button class="btn-primary" onclick="toggleProteinToday(); closeModal();">
+            ${state.proteinCheckDate === getTodayISO() ? 'Снять отметку' : '✓ Добрал норму сегодня'}
+          </button>
+        </div>
+      `);
+    }
+
+    function renderCutTab() {
+      const sorted = getSortedWeighins();
+      const first = sorted[0];
+      const latest = sorted[sorted.length - 1];
+      if (!latest) return;
+
+      const targetW = state.profile.targetWeight;
+      const targetF = state.profile.targetFat;
+      const startW = Math.max(first.weight, targetW + 0.1);
+      const startF = Math.max(first.fat, targetF + 0.1);
+
+      const remW = Math.max(0, latest.weight - targetW);
+      const remF = Math.max(0, latest.fat - targetF);
+      const wPct = Math.max(0, Math.min(100, Math.round(((startW - latest.weight) / (startW - targetW)) * 100)));
+      const fPct = Math.max(0, Math.min(100, Math.round(((startF - latest.fat) / (startF - targetF)) * 100)));
+
+      // Темп потери веса (кг/нед)
+      let rateKgWeek = 0;
+      let ratePctWeek = 0;
+      if (sorted.length >= 2) {
+        const d1 = new Date(first.date + 'T12:00:00');
+        const d2 = new Date(latest.date + 'T12:00:00');
+        const days = Math.max(1, (d2 - d1) / (24 * 3600 * 1000));
+        rateKgWeek = ((first.weight - latest.weight) / days) * 7;
+        ratePctWeek = (rateKgWeek / first.weight) * 100;
+      }
+
+      const safeMin = Number((latest.weight * 0.005).toFixed(2)); // 0.5% (~0.37 кг)
+      const safeMax = Number((latest.weight * 0.010).toFixed(2)); // 1.0% (~0.75 кг)
+
+      let gaugeStatus = 'Идеальный коридор — мышцы защищены';
+      let gaugeTone = 'badge-lime';
+      if (sorted.length < 2) {
+        gaugeStatus = 'Добавь 2-й замер для расчёта темпа';
+        gaugeTone = 'badge-cyan';
+      } else if (rateKgWeek > safeMax) {
+        gaugeStatus = 'Слишком быстро — риск потери мышц!';
+        gaugeTone = 'badge-coral';
+      } else if (rateKgWeek < safeMin) {
+        gaugeStatus = 'Медленный темп / Поддержание';
+        gaugeTone = 'badge-cyan';
+      }
+
+      // Позиция маркера на шкале (0 .. 1.15 кг/нед)
+      const thumbPct = Math.max(4, Math.min(96, (rateKgWeek / 1.1) * 100));
+      const proteinGoal = Math.round(latest.weight * 2.0);
+      const proteinDoneToday = state.proteinCheckDate === getTodayISO();
+
+      const etaWeeks = (rateKgWeek > 0.15 && remW > 0) ? Math.ceil(remW / rateKgWeek) : null;
+
+      // Кольцо прогресса SVG (окружность = 2 * PI * 44 ≈ 276.46)
+      const circ = 276.46;
+      const dashOff = circ * (1 - wPct / 100);
+
+      document.getElementById('cut-hero-card').innerHTML = `
+        <div class="flex-between" style="margin-bottom: 12px;">
+          <div>
+            <div class="card-title">Курс на рельеф</div>
+            <div class="card-subtitle">${etaWeeks ? `Прогноз до ${targetW.toFixed(1)} кг: ≈ ${etaWeeks} нед.` : (remW <= 0 ? '🏆 Весовая цель достигнута!' : `Цель: ${targetW.toFixed(1)} кг · ${targetF.toFixed(1)}% жира`)}</div>
+          </div>
+          <button class="badge badge-lime" style="min-height:34px;" onclick="openProfileModal()">Цели ✎</button>
+        </div>
+
+        <div class="cut-hero-row">
+          <div class="ring-box">
+            <svg width="112" height="112" viewBox="0 0 112 112">
+              <circle cx="56" cy="56" r="44" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="9"/>
+              <circle cx="56" cy="56" r="44" fill="none" stroke="#C8FF00" stroke-width="9" stroke-linecap="round"
+                stroke-dasharray="${circ}" stroke-dashoffset="${dashOff.toFixed(1)}" transform="rotate(-90 56 56)"/>
+            </svg>
+            <div class="ring-center">
+              <div style="font-size:21px; font-weight:800; color:var(--lime); line-height:1;">${wPct}%</div>
+              <div style="font-size:10px; color:var(--text-2); margin-top:2px;">пути</div>
+            </div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div>
+              <div class="flex-between">
+                <span style="font-size:11.5px; color:var(--text-2);">Вес тела</span>
+                <span style="font-size:12px; font-weight:800; color:var(--lime);">−${remW.toFixed(1)} кг до ${targetW.toFixed(1)}</span>
+              </div>
+              <div class="metric-big">${latest.weight.toFixed(1)}<span class="metric-unit">кг</span></div>
+            </div>
+            <div>
+              <div class="flex-between">
+                <span style="font-size:11.5px; color:var(--text-2);">Процент жира</span>
+                <span style="font-size:12px; font-weight:800; color:var(--cyan);">−${remF.toFixed(1)}% до ${targetF.toFixed(1)}%</span>
+              </div>
+              <div style="font-size:19px; font-weight:800;">${latest.fat.toFixed(1)}<span class="metric-unit">%</span> <span style="font-size:11.5px; color:var(--text-2); font-weight:600;">· мышцы ${latest.muscle ? latest.muscle.toFixed(1) + ' кг' : '—'}</span></div>
+              <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${fPct}%; background: var(--cyan);"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Шкала безопасного темпа сушки -->
+        <div style="padding-top:12px; border-top:1px solid var(--border);">
+          <div class="flex-between">
+            <span style="font-size:12px; font-weight:700; color:var(--text-2);">Темп сушки: <b style="color:var(--text);">${rateKgWeek.toFixed(2)} кг/нед</b> (${ratePctWeek.toFixed(2)}%)</span>
+            <span class="badge ${gaugeTone}">${rateKgWeek.toFixed(2)} кг/н</span>
+          </div>
+          <div class="gauge-track"><div class="gauge-thumb" style="left:${thumbPct.toFixed(1)}%;"></div></div>
+          <div class="gauge-labels">
+            <span>0 кг</span>
+            <span style="color:var(--lime);">Коридор ${safeMin}–${safeMax} кг/нед</span>
+            <span style="color:#FF8AA0;">Риск мышц</span>
+          </div>
+          <div style="font-size:12px; font-weight:700; margin-top:7px; color:${gaugeTone === 'badge-lime' ? 'var(--lime)' : gaugeTone === 'badge-coral' ? '#FF8AA0' : 'var(--cyan)'};">
+            ${gaugeStatus}
+          </div>
+        </div>
+
+        <!-- Интерактивная плашка дневной нормы белка -->
+        <button type="button" class="protein-banner ${proteinDoneToday ? 'checked' : ''}" onclick="openProteinGuideModal()">
+          <div>
+            <div style="font-size:12.5px; font-weight:800;">🥩 Цель белка: ~${proteinGoal} г/день <span style="color:var(--text-2); font-weight:600;">(2.0 г/кг)</span></div>
+            <div style="font-size:11.5px; color:var(--text-2); margin-top:2px;">${proteinDoneToday ? 'Отлично! Дневная норма на сегодня отмечена' : 'Нажми для шпаргалки и отметки за сегодня'}</div>
+          </div>
+          <span class="badge ${proteinDoneToday ? 'badge-lime' : 'badge-muted'}">${proteinDoneToday ? '✓ Закрыт' : 'Инфо'}</span>
+        </button>
+      `;
+
+      // Замеры лентой (Талия / Грудь / Бицепс)
+      const dWaist = (latest.waist && first.waist) ? latest.waist - first.waist : 0;
+      const dChest = (latest.chest && first.chest) ? latest.chest - first.chest : 0;
+      const dBic = (latest.biceps && first.biceps) ? latest.biceps - first.biceps : 0;
+
+      document.getElementById('cut-measure-strip').innerHTML = `
+        <div class="measure-pill">
+          <div style="font-size:11px; color:var(--text-2);">Талия</div>
+          <div style="font-size:19px; font-weight:800; margin-top:2px;">${latest.waist || '—'} <small style="font-size:11px; color:var(--text-3);">см</small></div>
+          <div style="font-size:10.5px; font-weight:700; color:${dWaist <= 0 ? 'var(--lime)' : '#FF8AA0'};">${dWaist === 0 ? 'старт' : (dWaist > 0 ? '+' : '') + dWaist.toFixed(1) + ' см'}</div>
+        </div>
+        <div class="measure-pill">
+          <div style="font-size:11px; color:var(--text-2);">Грудь</div>
+          <div style="font-size:19px; font-weight:800; margin-top:2px;">${latest.chest || '—'} <small style="font-size:11px; color:var(--text-3);">см</small></div>
+          <div style="font-size:10.5px; font-weight:700; color:var(--cyan);">${dChest === 0 ? 'старт' : (dChest > 0 ? '+' : '') + dChest.toFixed(1) + ' см'}</div>
+        </div>
+        <div class="measure-pill">
+          <div style="font-size:11px; color:var(--text-2);">Бицепс</div>
+          <div style="font-size:19px; font-weight:800; margin-top:2px;">${latest.biceps || '—'} <small style="font-size:11px; color:var(--text-3);">см</small></div>
+          <div style="font-size:10.5px; font-weight:700; color:var(--cyan);">${dBic === 0 ? 'старт' : (dBic > 0 ? '+' : '') + dBic.toFixed(1) + ' см'}</div>
+        </div>
+      `;
+
+      // График сушки
+      const mode = state.ui.cutChartMode || 'weight';
+      document.getElementById('chart-mode-weight').classList.toggle('active', mode === 'weight');
+      document.getElementById('chart-mode-fat').classList.toggle('active', mode === 'fat');
+      document.getElementById('cut-chart-sub').textContent = mode === 'weight'
+        ? `Динамика веса и пунктирный прогноз к ${targetW.toFixed(1)} кг`
+        : `Динамика % жира и пунктирный прогноз к ${targetF.toFixed(1)}%`;
+
+      renderCutChart(sorted, mode);
+
+      // Список замеров
+      document.getElementById('weighin-history-list').innerHTML = [...sorted].reverse().map(item => `
+        <div class="history-item">
+          <div class="flex-between">
+            <div>
+              <span style="font-size:15px; font-weight:800;">${item.weight.toFixed(1)} кг</span>
+              <span style="color:var(--cyan); font-weight:800; margin-left:8px;">${item.fat.toFixed(1)}% жира</span>
+              ${item.muscle ? `<span style="color:var(--text-2); font-size:12px; margin-left:7px;">${item.muscle.toFixed(1)} кг мышц</span>` : ''}
+            </div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span class="badge badge-muted">${formatDateRu(item.date)}</span>
+              ${sorted.length > 1 ? `<button style="min-width:34px; min-height:34px; color:var(--text-3); font-size:15px;" onclick="confirmDeleteWeighin('${item.id}')" title="Удалить">✕</button>` : ''}
+            </div>
+          </div>
+          <div style="font-size:11.5px; color:var(--text-2); margin-top:7px; display:flex; flex-wrap:wrap; gap:10px;">
+            ${item.waist ? `<span>Талия: <b style="color:var(--text);">${item.waist}</b></span>` : ''}
+            ${item.chest ? `<span>Грудь: <b style="color:var(--text);">${item.chest}</b></span>` : ''}
+            ${item.biceps ? `<span>Бицепс: <b style="color:var(--text);">${item.biceps}</b></span>` : ''}
+            ${item.extras && item.extras.water ? `<span>Вода: ${item.extras.water}%</span>` : ''}
+            ${item.extras && item.extras.bmr ? `<span>BMR: ${item.extras.bmr}</span>` : ''}
+            ${item.extras && item.extras.hr ? `<span>Пульс: ${item.extras.hr}</span>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderCutChart(data, mode) {
+      const container = document.getElementById('cut-chart-container');
+      const W = 400, H = 180, padL = 38, padR = 24, padT = 20, padB = 28;
+      const vals = data.map(d => mode === 'weight' ? d.weight : d.fat);
+      const goalVal = mode === 'weight' ? state.profile.targetWeight : state.profile.targetFat;
+      const allV = [...vals, goalVal];
+      const minV = Math.floor((Math.min(...allV) - 0.6) * 10) / 10;
+      const maxV = Math.ceil((Math.max(...allV) + 0.6) * 10) / 10;
+      const range = Math.max(1, maxV - minV);
+
+      // Оставляем правые 24% графика под пунктирную линию прогноза к цели
+      const dataRightX = W - padR - 74;
+      const getX = idx => data.length === 1 ? padL + 30 : padL + (idx / (data.length - 1)) * (dataRightX - padL);
+      const getY = v => padT + ((maxV - v) / range) * (H - padT - padB);
+
+      const lineColor = mode === 'weight' ? '#C8FF00' : '#00E5FF';
+      const pts = vals.map((v, i) => ({ x: getX(i), y: getY(v), v, date: data[i].date }));
+      const polyline = pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+      const areaPath = pts.length > 1
+        ? `M ${pts[0].x},${H - padB} L ${pts.map(p => `${p.x},${p.y}`).join(' L ')} L ${pts[pts.length - 1].x},${H - padB} Z`
+        : '';
+
+      const goalY = getY(goalVal);
+      const lastPt = pts[pts.length - 1];
+      const projX = W - padR;
+      const unit = mode === 'weight' ? 'кг' : '%';
+
+      container.innerHTML = `
+        <svg class="chart-svg" viewBox="0 0 ${W} ${H}">
+          <defs>
+            <linearGradient id="cutArea-${mode}" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="${lineColor}" stop-opacity="0.24"/>
+              <stop offset="100%" stop-color="${lineColor}" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+
+          ${[0, 0.5, 1].map(t => {
+            const v = maxV - t * range;
+            const y = padT + t * (H - padT - padB);
+            return `
+              <line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+              <text x="${padL - 6}" y="${y + 3.5}" text-anchor="end" font-size="9.5" fill="#646478">${v.toFixed(1)}</text>
+            `;
+          }).join('')}
+
+          <!-- Горизонтальная линия цели -->
+          <line x1="${padL}" y1="${goalY.toFixed(1)}" x2="${W - padR}" y2="${goalY.toFixed(1)}" stroke="#FF4D6D" stroke-opacity="0.55" stroke-width="1.2" stroke-dasharray="4 4"/>
+
+          <!-- Пунктирная линия прогноза от последней точки к цели -->
+          <line x1="${lastPt.x.toFixed(1)}" y1="${lastPt.y.toFixed(1)}" x2="${projX}" y2="${goalY.toFixed(1)}" stroke="${lineColor}" stroke-opacity="0.65" stroke-width="2" stroke-dasharray="5 4"/>
+          <circle cx="${projX}" cy="${goalY.toFixed(1)}" r="4.5" fill="#FF4D6D" stroke="#09090C" stroke-width="2"/>
+          <text x="${projX}" y="${(goalY - 9).toFixed(1)}" text-anchor="end" font-size="9.5" font-weight="800" fill="#FF8AA0">Цель ${goalVal.toFixed(1)}${unit}</text>
+
+          ${areaPath ? `<path d="${areaPath}" fill="url(#cutArea-${mode})"/>` : ''}
+          ${pts.length > 1 ? `<polyline points="${polyline}" fill="none" stroke="${lineColor}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>` : ''}
+
+          ${pts.map((p, i) => `
+            <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4.5" fill="#09090C" stroke="${lineColor}" stroke-width="2.4"/>
+            <text x="${p.x.toFixed(1)}" y="${(p.y - 9).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="800" fill="#F6F6FA">${p.v.toFixed(1)}</text>
+            ${(pts.length <= 5 || i === 0 || i === pts.length - 1) ? `
+              <text x="${p.x.toFixed(1)}" y="${H - 7}" text-anchor="middle" font-size="9.5" fill="#8C8C9E">${formatDateRu(p.date)}</text>
+            ` : ''}
+          `).join('')}
+        </svg>
+      `;
+    }
+
+    // Модальное окно «Добавить замер» (сворачиваемый блок BIA + научное пояснение)
+    function openAddWeighinModal() {
+      const latest = getLatestWeighin();
+      openModal(`
+        <div class="flex-between" style="margin-bottom: 12px;">
+          <div>
+            <h3 style="font-size:18px; font-weight:800;">Добавить замер</h3>
+            <div style="font-size:12px; color:var(--text-2);">Лучше взвешиваться утром натощак</div>
+          </div>
+          <button style="min-width:44px; min-height:44px; color:var(--text-2); font-size:18px;" onclick="closeModal()">✕</button>
+        </div>
+
+        <form onsubmit="saveWeighin(event)">
+          <div class="form-grid">
+            <div class="field full">
+              <label for="wi-date">Дата</label>
+              <input id="wi-date" class="input" type="date" value="${getTodayISO()}" required>
+            </div>
+            <div class="field primary">
+              <label for="wi-weight">Вес (кг) ★</label>
+              <input id="wi-weight" class="input" type="number" step="0.1" min="40" max="150" placeholder="${latest.weight.toFixed(1)}" required>
+            </div>
+            <div class="field primary">
+              <label for="wi-fat">% жира ★</label>
+              <input id="wi-fat" class="input" type="number" step="0.1" min="4" max="45" placeholder="${latest.fat.toFixed(1)}" required>
+            </div>
+            <div class="field primary full">
+              <label for="wi-muscle">Мышечная масса (кг)</label>
+              <input id="wi-muscle" class="input" type="number" step="0.1" min="25" max="110" placeholder="${latest.muscle ? latest.muscle.toFixed(1) : '58.9'}">
+            </div>
+          </div>
+
+          <div class="form-grid-3 mt-10">
+            <div class="field"><label for="wi-waist">Талия (см)</label><input id="wi-waist" class="input" type="number" step="0.5" placeholder="${latest.waist || 80}"></div>
+            <div class="field"><label for="wi-chest">Грудь (см)</label><input id="wi-chest" class="input" type="number" step="0.5" placeholder="${latest.chest || 92}"></div>
+            <div class="field"><label for="wi-biceps">Бицепс (см)</label><input id="wi-biceps" class="input" type="number" step="0.5" placeholder="${latest.biceps || 34}"></div>
+          </div>
+
+          <button type="button" class="accordion-btn" onclick="toggleAccordion('modal-bia-acc', this)">
+            <span>Умные весы (вторичные BIA-метрики)</span>
+            <span class="acc-arrow">▾</span>
+          </button>
+          <div id="modal-bia-acc" class="accordion-body">
+            <div class="science-note amber" style="margin-top:0; margin-bottom:10px;">
+              <b>Почему BIA «прыгают»?</b> Бытовые весы оценивают ткани по электропроводности. На сушке гликоген в мышцах уходит вместе с водой (1 г = 3–4 г воды), и весы ошибочно списывают это на «потерю мышц». Главный ориентир — тренд <b>веса</b>, <b>талии</b> и <b>силы (RSI)</b>.
+            </div>
+            <div class="form-grid">
+              <div class="field"><label for="wi-water">Вода (%)</label><input id="wi-water" class="input" type="number" step="0.1" placeholder="60.2"></div>
+              <div class="field"><label for="wi-visceral">Висцеральный жир</label><input id="wi-visceral" class="input" type="number" step="1" placeholder="4"></div>
+              <div class="field"><label for="wi-bmr">BMR (ккал)</label><input id="wi-bmr" class="input" type="number" step="1" placeholder="1765"></div>
+              <div class="field"><label for="wi-bone">Кости (кг)</label><input id="wi-bone" class="input" type="number" step="0.1" placeholder="3.1"></div>
+              <div class="field"><label for="wi-protein">Белок (%)</label><input id="wi-protein" class="input" type="number" step="0.1" placeholder="19.0"></div>
+              <div class="field"><label for="wi-hr">Пульс (уд/мин)</label><input id="wi-hr" class="input" type="number" step="1" placeholder="62"></div>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" onclick="closeModal()">Отмена</button>
+            <button type="submit" class="btn-primary">Сохранить</button>
+          </div>
+        </form>
+      `);
+    }
+
+    function saveWeighin(e) {
+      e.preventDefault();
+      const date = document.getElementById('wi-date').value || getTodayISO();
+      const weight = parseFloat(document.getElementById('wi-weight').value);
+      const fat = parseFloat(document.getElementById('wi-fat').value);
+      const muscle = parseFloat(document.getElementById('wi-muscle').value) || null;
+      const waist = parseFloat(document.getElementById('wi-waist').value) || null;
+      const chest = parseFloat(document.getElementById('wi-chest').value) || null;
+      const biceps = parseFloat(document.getElementById('wi-biceps').value) || null;
+
+      if (isNaN(weight) || isNaN(fat)) {
+        showToast('Укажи вес и % жира', 'coral');
+        return;
+      }
+
+      const extras = {
+        water: parseFloat(document.getElementById('wi-water').value) || null,
+        visceral: parseInt(document.getElementById('wi-visceral').value, 10) || null,
+        bmr: parseInt(document.getElementById('wi-bmr').value, 10) || null,
+        bone: parseFloat(document.getElementById('wi-bone').value) || null,
+        protein: parseFloat(document.getElementById('wi-protein').value) || null,
+        hr: parseInt(document.getElementById('wi-hr').value, 10) || null
+      };
+
+      const existingIdx = state.weighins.findIndex(w => w.date === date);
+      const entry = {
+        id: existingIdx >= 0 ? state.weighins[existingIdx].id : 'wi-' + Date.now(),
+        date, weight, fat, muscle, waist, chest, biceps, extras
+      };
+      if (existingIdx >= 0) state.weighins[existingIdx] = entry;
+      else state.weighins.push(entry);
+
+      // Пересчитываем цели текущей тренировки на случай активации Компенсации сушки!
+      refreshUncompletedTargets();
+      saveState();
+      closeModal();
+      renderAll();
+
+      const comp = getCutCompensation(null);
+      if (comp.active) {
+        showToast(`Вес ${weight.toFixed(1)} кг сохранён · Активирована компенсация сушки!`, 'amber');
+      } else {
+        showToast(`Замер ${weight.toFixed(1)} кг сохранён`, 'lime');
+      }
+    }
+
+    function confirmDeleteWeighin(id) {
+      openModal(`
+        <h3 style="font-size:18px; font-weight:800;">Удалить замер?</h3>
+        <p style="font-size:13px; color:var(--text-2); margin-top:6px;">График сушки и компенсация веса обновятся автоматически.</p>
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="closeModal()">Отмена</button>
+          <button class="btn-danger" onclick="deleteWeighin('${id}')">Удалить</button>
+        </div>
+      `);
+    }
+
+    function deleteWeighin(id) {
+      state.weighins = state.weighins.filter(w => w.id !== id);
+      refreshUncompletedTargets();
+      saveState();
+      closeModal();
+      renderAll();
+      showToast('Замер удалён', 'cyan');
+    }
+
+    /* ==========================================================================
+       ВКЛАДКА 4: «ПРОГРЕСС» (RSI-график, Рекорды, Журнал, Бэкап)
+       ========================================================================== */
+    function setProgressChartMode(mode) {
+      state.ui.progChartMode = mode;
+      saveState();
+      renderProgressTab();
+    }
+
+    function toggleHistoryExpand(id) {
+      state.ui.expandedWorkoutId = state.ui.expandedWorkoutId === id ? null : id;
+      renderProgressTab();
+    }
+
+    function getBestWorkingSets() {
+      const best = {
+        pullups: { pronated: 0, wide: 0, supinated: 0, neutral: 0, overall: 0 },
+        pushups: 0,
+        legraises: 0,
+        pike: 0
+      };
+      state.workouts.forEach(w => {
+        w.exercises.forEach(ex => {
+          ex.sets.forEach(s => {
+            if (ex.id === 'pullups') {
+              const g = ex.grip || 'pronated';
+              best.pullups[g] = Math.max(best.pullups[g] || 0, s.reps);
+              best.pullups.overall = Math.max(best.pullups.overall, s.reps);
+            } else if (best[ex.id] !== undefined) {
+              best[ex.id] = Math.max(best[ex.id], s.reps);
+            }
+          });
+        });
+      });
+      return best;
+    }
+
+    function renderProgressTab() {
+      const totalSessions = state.workouts.length;
+      const latestSession = state.workouts[0];
+      const latestRsi = latestSession ? (latestSession.rsi || 0) : 0;
+      const latestTonnage = latestSession ? (latestSession.effectiveTonnage || 0) : 0;
+      const best = getBestWorkingSets();
+
+      document.getElementById('progress-kpi-grid').innerHTML = `
+        <div class="metric-tile">
+          <div style="font-size:11px; color:var(--text-2);">Индекс силы (RSI)</div>
+          <div class="metric-big text-lime">${latestRsi || '—'}</div>
+          <div style="font-size:11px; color:var(--text-2); margin-top:2px;">Тоннаж / вес тела</div>
+        </div>
+        <div class="metric-tile">
+          <div style="font-size:11px; color:var(--text-2);">Эфф. тоннаж</div>
+          <div class="metric-big text-cyan">${latestTonnage || '—'}<span class="metric-unit">кг</span></div>
+          <div style="font-size:11px; color:var(--text-2); margin-top:2px;">Последняя сессия</div>
+        </div>
+        <div class="metric-tile">
+          <div style="font-size:11px; color:var(--text-2);">Сессий в журнале</div>
+          <div class="metric-big">${totalSessions}</div>
+          <div style="font-size:11px; color:var(--text-2); margin-top:2px;">График 3×/нед</div>
+        </div>
+        <div class="metric-tile">
+          <div style="font-size:11px; color:var(--text-2);">База на след. раз</div>
+          <div class="metric-big">${state.targets.pullups[state.activeWorkout.pullupsGrip]} / ${state.targets.pushups}</div>
+          <div style="font-size:11px; color:var(--text-2); margin-top:2px;">Турник / Отжимания</div>
+        </div>
+      `;
+
+      const mode = state.ui.progChartMode || 'rsi';
+      document.getElementById('prog-mode-rsi').classList.toggle('active', mode === 'rsi');
+      document.getElementById('prog-mode-vol').classList.toggle('active', mode === 'volume');
+      document.getElementById('prog-chart-sub').textContent = mode === 'rsi'
+        ? 'Индекс относительной силы (RSI) — главный маркер сохранения мышц на сушке'
+        : 'Общий объём чистых повторений за тренировку';
+      renderProgressChart(mode);
+
+      document.getElementById('records-list').innerHTML = `
+        <div class="pr-row">
+          <div><div class="fw-800" style="font-size:13.5px;">Жим лёжа</div><div class="text-muted" style="font-size:11.5px;">Исторический рекорд (зал 2025)</div></div>
+          <span class="badge badge-lime">${state.profile.records.benchPress}</span>
+        </div>
+        <div class="pr-row">
+          <div><div class="fw-800" style="font-size:13.5px;">Подтягивания (прайм)</div><div class="text-muted" style="font-size:11.5px;">Рекорд зала</div></div>
+          <span class="badge badge-lime">${state.profile.records.pullupsPrime}</span>
+        </div>
+        <div class="pr-row">
+          <div><div class="fw-800" style="font-size:13.5px;">Чистые подтягивания (хваты)</div><div class="text-muted" style="font-size:11.5px;">Об: ${best.pullups.pronated || '—'} · Шир: ${best.pullups.wide || '—'} · Обр: ${best.pullups.supinated || '—'} · Пар: ${best.pullups.neutral || '—'}</div></div>
+          <span class="badge badge-cyan">Макс: ${best.pullups.overall || '—'}</span>
+        </div>
+        <div class="pr-row">
+          <div><div class="fw-800" style="font-size:13.5px;">Отжимания / Ноги к турнику</div><div class="text-muted" style="font-size:11.5px;">Лучшие строгие подходы</div></div>
+          <span class="badge badge-cyan">${best.pushups || '—'} / ${best.legraises || '—'}</span>
+        </div>
+      `;
+
+      // Раскрывающийся журнал тренировок
+      const listEl = document.getElementById('workout-history-list');
+      if (!state.workouts.length) {
+        listEl.innerHTML = `<div class="card text-muted" style="text-align:center;">Журнал пуст — заверши свою первую тренировку!</div>`;
+      } else {
+        listEl.innerHTML = state.workouts.map(w => {
+          const isOpen = state.ui.expandedWorkoutId === w.id;
+          const pu = w.exercises.find(e => e.id === 'pullups');
+          const gripTxt = pu && pu.grip ? PULLUP_GRIPS[pu.grip]?.short : '—';
+          return `
+            <div class="history-item">
+              <button type="button" class="history-head" onclick="toggleHistoryExpand('${w.id}')">
+                <div>
+                  <div style="display:flex; align-items:center; gap:7px;">
+                    <span style="font-size:14.5px; font-weight:800;">${formatDateRu(w.date)}</span>
+                    ${w.isDemo ? `<span class="badge badge-amber" style="padding:2px 7px; font-size:10px;">Демо-база</span>` : ''}
+                    <span style="font-size:11.5px; color:var(--cyan); font-weight:700;">${gripTxt}</span>
+                  </div>
+                  <div style="font-size:11.5px; color:var(--text-2); margin-top:2px;">
+                    RSI: <b style="color:var(--text);">${w.rsi || '—'}</b> · Тоннаж: ${w.effectiveTonnage || '—'} кг · ${w.totalReps} повт.
+                  </div>
+                </div>
+                <span style="color:var(--text-2); font-size:14px;">${isOpen ? '▴' : '▾'}</span>
+              </button>
+
+              <div class="history-details ${isOpen ? 'open' : ''}">
+                ${w.exercises.map(ex => `
+                  <div class="history-ex-line">
+                    <span style="color:var(--text-2);">${EXERCISES[ex.id]?.name || ex.id}${ex.grip ? ` (${PULLUP_GRIPS[ex.grip]?.short})` : ''}</span>
+                    <span style="font-weight:800; font-variant-numeric:tabular-nums;">${ex.sets.map(s => `${s.reps}@${s.rir}`).join(' · ')}</span>
+                  </div>
+                `).join('')}
+                <div class="flex-between" style="margin-top:10px; padding-top:8px; border-top:1px solid var(--border);">
+                  <span style="font-size:11px; color:var(--text-3);">Вес: ${w.bodyweight || 74.7} кг · Готовность: ${w.readiness}/5</span>
+                  <button type="button" class="btn-danger" style="min-height:36px; padding:0 12px; font-size:12px;" onclick="confirmDeleteWorkout('${w.id}')">Удалить</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    function renderProgressChart(mode) {
+      const container = document.getElementById('progress-chart-container');
+      const items = [...state.workouts].reverse().slice(-10);
+      if (!items.length) {
+        container.innerHTML = `<div style="padding:24px; text-align:center; color:var(--text-3); font-size:12.5px;">Заверши тренировку, чтобы построить график</div>`;
+        return;
+      }
+
+      const W = 400, H = 162, padL = 36, padR = 14, padT = 20, padB = 26;
+      const pts = items.map(w => ({
+        val: mode === 'rsi' ? (w.rsi || 0) : (w.totalReps || 0),
+        date: w.date
+      }));
+      const maxV = Math.max(10, Math.ceil(Math.max(...pts.map(p => p.val)) * 1.18));
+      const color = mode === 'rsi' ? '#C8FF00' : '#00E5FF';
+      const barW = Math.min(34, ((W - padL - padR) / Math.max(1, pts.length)) * 0.54);
+
+      container.innerHTML = `
+        <svg class="chart-svg" viewBox="0 0 ${W} ${H}">
+          ${[0, 0.5, 1].map(t => {
+            const y = padT + t * (H - padT - padB);
+            const v = Math.round(maxV * (1 - t));
+            return `
+              <line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+              <text x="${padL - 6}" y="${y + 3}" text-anchor="end" font-size="9.5" fill="#646478">${v}</text>
+            `;
+          }).join('')}
+
+          ${pts.map((p, i) => {
+            const cx = pts.length === 1
+              ? (padL + W - padR) / 2
+              : padL + ((i + 0.5) / pts.length) * (W - padL - padR);
+            const bh = (p.val / maxV) * (H - padT - padB);
+            const by = H - padB - bh;
+            return `
+              <rect x="${(cx - barW / 2).toFixed(1)}" y="${by.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(4, bh).toFixed(1)}" rx="6" fill="${color}" fill-opacity="0.88"/>
+              <text x="${cx.toFixed(1)}" y="${(by - 5).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="800" fill="#F6F6FA">${p.val}</text>
+              <text x="${cx.toFixed(1)}" y="${H - 7}" text-anchor="middle" font-size="9" fill="#8C8C9E">${formatDateRu(p.date)}</text>
+            `;
+          }).join('')}
+        </svg>
+      `;
+    }
+
+    function confirmDeleteWorkout(id) {
+      openModal(`
+        <h3 style="font-size:18px; font-weight:800;">Удалить тренировку?</h3>
+        <p style="font-size:13px; color:var(--text-2); margin-top:6px;">Атлас восстановления и графики пересчитаются.</p>
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="closeModal()">Отмена</button>
+          <button class="btn-danger" onclick="deleteWorkout('${id}')">Удалить</button>
+        </div>
+      `);
+    }
+
+    function deleteWorkout(id) {
+      state.workouts = state.workouts.filter(w => w.id !== id);
+      saveState();
+      closeModal();
+      renderAll();
+      showToast('Тренировка удалена', 'cyan');
+    }
+
+    /* ==========================================================================
+       МОДАЛКИ ПРОФИЛЯ, РЕКОРДОВ И JSON БЭКАП
+       ========================================================================== */
+    function openProfileModal() {
+      openModal(`
+        <h3 style="font-size:18px; font-weight:800; margin-bottom:12px;">Параметры и цели сушки</h3>
+        <form onsubmit="saveProfileModal(event)">
+          <div class="form-grid">
+            <div class="field"><label>Рост (см)</label><input id="ed-h" class="input" type="number" value="${state.profile.height}" required></div>
+            <div class="field"><label>База веса сушки (кг)</label><input id="ed-bw" class="input" type="number" step="0.1" value="${state.profile.baselineWeight}" required></div>
+            <div class="field primary"><label>Цель веса (кг)</label><input id="ed-tw" class="input" type="number" step="0.1" value="${state.profile.targetWeight}" required></div>
+            <div class="field primary"><label>Цель % жира</label><input id="ed-tf" class="input" type="number" step="0.1" value="${state.profile.targetFat}" required></div>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" onclick="closeModal()">Отмена</button>
+            <button type="submit" class="btn-primary">Сохранить</button>
+          </div>
+        </form>
+      `);
+    }
+
+    function saveProfileModal(e) {
+      e.preventDefault();
+      state.profile.height = parseInt(document.getElementById('ed-h').value, 10) || 185;
+      state.profile.baselineWeight = parseFloat(document.getElementById('ed-bw').value) || 74.7;
+      state.profile.targetWeight = parseFloat(document.getElementById('ed-tw').value) || 71.0;
+      state.profile.targetFat = parseFloat(document.getElementById('ed-tf').value) || 13.0;
+      refreshUncompletedTargets();
+      saveState();
+      closeModal();
+      renderAll();
+      showToast('Параметры обновлены', 'lime');
+    }
+
+    function openRecordsModal() {
+      openModal(`
+        <h3 style="font-size:18px; font-weight:800; margin-bottom:12px;">Личные рекорды (PR)</h3>
+        <form onsubmit="saveRecordsModal(event)">
+          <div class="form-grid">
+            <div class="field full"><label>Жим лёжа</label><input id="ed-pr-bench" class="input" type="text" value="${state.profile.records.benchPress}"></div>
+            <div class="field full"><label>Подтягивания (прайм)</label><input id="ed-pr-pull" class="input" type="text" value="${state.profile.records.pullupsPrime}"></div>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" onclick="closeModal()">Отмена</button>
+            <button type="submit" class="btn-primary">Сохранить</button>
+          </div>
+        </form>
+      `);
+    }
+
+    function saveRecordsModal(e) {
+      e.preventDefault();
+      state.profile.records.benchPress = document.getElementById('ed-pr-bench').value.trim() || '80 кг (зал)';
+      state.profile.records.pullupsPrime = document.getElementById('ed-pr-pull').value.trim() || '29 повт.';
+      saveState();
+      closeModal();
+      renderProgressTab();
+      showToast('Рекорды обновлены', 'lime');
+    }
+
+    function exportBackup() {
+      try {
+        const json = JSON.stringify(state, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `vectra-v2-backup-${getTodayISO()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        showToast('JSON-бэкап скачан', 'lime');
+      } catch (err) {
+        copyBackupToClipboard();
+      }
+    }
+
+    function copyBackupToClipboard() {
+      try {
+        const json = JSON.stringify(state, null, 2);
+        const ta = document.createElement('textarea');
+        ta.value = json;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast('JSON-бэкап скопирован в буфер', 'cyan');
+      } catch (err) {
+        showToast('Не удалось скопировать', 'coral');
+      }
+    }
+
+    function importBackupFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (!parsed.profile || !parsed.weighins) throw new Error('Invalid');
+          state = parsed;
+          if (!state.activeWorkout) state.activeWorkout = buildFreshWorkout(state);
+          saveState();
+          renderAll();
+          showToast('Данные восстановлены из бэкапа!', 'lime');
+        } catch (err) {
+          showToast('Ошибка файла бэкапа (неверный JSON)', 'coral');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    function confirmResetAll() {
+      openModal(`
+        <h3 style="font-size:18px; font-weight:800; color:#FF8AA0;">Сбросить все данные?</h3>
+        <p style="font-size:13px; color:var(--text-2); margin-top:6px;">
+          Журнал и новые замеры удалятся, приложение вернётся к твоим стартовым параметрам (74.7 кг, 16.8% жира).
+        </p>
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="closeModal()">Отмена</button>
+          <button class="btn-danger" onclick="executeResetAll()">Сбросить</button>
+        </div>
+      `);
+    }
+
+    function executeResetAll() {
+      localStorage.removeItem(STORAGE_KEY);
+      state = createDefaultState();
+      state.activeWorkout = buildFreshWorkout(state);
+      saveState();
+      closeModal();
+      stopRestTimer(true);
+      renderAll();
+      showToast('Сброшено к стартовым настройкам', 'cyan');
+    }
+
+    /* ==========================================================================
+       ЗАПУСК ПРИЛОЖЕНИЯ
+       ========================================================================== */
+    function renderAll() {
+      updateTopbar();
+      renderWorkoutTab();
+      renderAtlasTab();
+      renderCutTab();
+      renderProgressTab();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      generateAppleTouchIconPNG();
+      renderAll();
+    });
+  </script>
+</body>
+</html>
